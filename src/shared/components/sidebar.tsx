@@ -55,7 +55,7 @@ export function Sidebar() {
       <div className="flex items-center gap-2 border-b border-slate-700 px-6 py-5">
         <Scale className="h-7 w-7 text-blue-400" />
         <div>
-          <h1 className="text-lg font-bold text-white tracking-tight">Verioska</h1>
+          <h1 className="text-lg font-bold text-white tracking-tight">Verioska Legal</h1>
           <p className="text-[10px] text-slate-400 uppercase tracking-widest">Centro de Mando</p>
         </div>
       </div>

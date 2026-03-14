@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Verioska | Centro de Mando Procesal',
-  description: 'Copiloto legal para litigación penal en México',
+  title: 'Verioska Legal | Centro de Mando Procesal',
+  description: 'Copiloto legal para litigación penal en México y Perú',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
