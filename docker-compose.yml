@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: verioska-db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: verioska
+      POSTGRES_USER: verioska
+      POSTGRES_PASSWORD: verioska_dev_2026
+    volumes:
+      - verioska_data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U verioska"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  verioska_data:
