@@ -12,6 +12,7 @@ import {
   Scale,
   Users,
   BookOpen,
+  Building2,
 } from 'lucide-react'
 
 const navItems = [
@@ -21,6 +22,7 @@ const navItems = [
   { href: '/plazos', label: 'Plazos', icon: Clock },
   { href: '/clientes', label: 'Clientes', icon: Users },
   { href: '/jurisprudencia', label: 'Jurisprudencia', icon: BookOpen },
+  { href: '/equipo', label: 'Mi Despacho', icon: Building2 },
 ]
 
 interface UserData {
