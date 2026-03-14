@@ -2,7 +2,7 @@ import { query, queryOne } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Clock, Calendar, Users, FolderOpen, MessageSquare, AlertTriangle, Lightbulb, FileText, Search, DollarSign, Receipt } from 'lucide-react'
+import { ArrowLeft, Clock, Calendar, Users, FolderOpen, MessageSquare, AlertTriangle, Lightbulb, FileText, Search, DollarSign, Receipt, BookOpen, Calculator, Brain } from 'lucide-react'
 import { Badge } from '@/shared/components/badge'
 import { SemaforoPlazo } from '@/shared/components/semaforo-plazo'
 import { GenerarPlazosButton } from './generar-plazos-button'
@@ -20,6 +20,10 @@ import { ConsultaExpediente } from '@/features/rag/components/consulta-expedient
 import { etapaLabels, tipoAudienciaLabels, tipoParteLabels } from '@/lib/paises/labels'
 import { GastosPanel } from '@/features/finanzas/components/gastos-panel'
 import { PagosPanel } from '@/features/finanzas/components/pagos-panel'
+import JurisprudenciaPanel from '@/features/jurisprudencia/components/jurisprudencia-panel'
+import DosificacionPanel from '@/features/dosificacion/components/dosificacion-panel'
+import InterrogatorioPanel from '@/features/interrogatorio/components/interrogatorio-panel'
+import CerebroPanel from '@/features/cerebro/components/cerebro-panel'
 
 export default async function ExpedienteDetailPage({
   params,
@@ -306,6 +310,22 @@ export default async function ExpedienteDetailPage({
           </h2>
           <EscritosPanel expedienteId={id} />
         </div>
+      </div>
+
+      {/* Cerebro Verioska - Chat IA */}
+      <div className="mt-6">
+        <CerebroPanel expedienteId={id} />
+      </div>
+
+      {/* Jurisprudencia + Dosificación */}
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <JurisprudenciaPanel pais={pais} />
+        <DosificacionPanel expedienteId={id} pais={pais} />
+      </div>
+
+      {/* Interrogatorio */}
+      <div className="mt-6">
+        <InterrogatorioPanel expedienteId={id} />
       </div>
 
       {/* Consulta al Expediente (RAG) */}
