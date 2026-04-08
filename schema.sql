@@ -41,6 +41,27 @@ CREATE TABLE users (
 );
 
 -- ============================================
+-- CLIENTES
+-- ============================================
+
+CREATE TABLE clientes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    despacho_id UUID NOT NULL REFERENCES despachos(id) ON DELETE CASCADE,
+    nombre VARCHAR(255) NOT NULL,
+    apellidos VARCHAR(255),
+    tipo_documento VARCHAR(20),
+    numero_documento VARCHAR(100),
+    telefono VARCHAR(20),
+    email VARCHAR(255),
+    direccion TEXT,
+    estado VARCHAR(20) DEFAULT 'activo',
+    fuente VARCHAR(50),
+    notas TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================
 -- EXPEDIENTES (el corazon del sistema)
 -- ============================================
 
@@ -48,6 +69,7 @@ CREATE TABLE expedientes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id),
     despacho_id UUID REFERENCES despachos(id),
+    cliente_id UUID REFERENCES clientes(id) ON DELETE SET NULL,
     -- Identificadores del caso
     nuc VARCHAR(100),                    -- Numero Unico de Causa
     carpeta_investigacion VARCHAR(100),  -- Numero de Carpeta de Investigacion
@@ -334,6 +356,25 @@ CREATE TABLE escritos (
     version INT DEFAULT 1,
     estado VARCHAR(20) DEFAULT 'borrador' CHECK (estado IN ('borrador', 'revisado', 'finalizado')),
     ruta_pdf TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================
+-- PAGOS
+-- ============================================
+
+CREATE TABLE pagos (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    despacho_id UUID NOT NULL REFERENCES despachos(id) ON DELETE CASCADE,
+    cliente_id UUID NOT NULL REFERENCES clientes(id) ON DELETE CASCADE,
+    expediente_id UUID REFERENCES expedientes(id) ON DELETE SET NULL,
+    monto DECIMAL(12,2) NOT NULL,
+    concepto VARCHAR(255) NOT NULL,
+    estado VARCHAR(20) DEFAULT 'pendiente' CHECK (estado IN ('pagado', 'pendiente', 'anulado')),
+    fecha_pago TIMESTAMPTZ,
+    fecha_vencimiento TIMESTAMPTZ,
+    notas TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

@@ -13,6 +13,7 @@ import {
   Users,
   BookOpen,
   Building2,
+  Settings,
 } from 'lucide-react'
 
 const navItems = [
@@ -23,6 +24,7 @@ const navItems = [
   { href: '/clientes', label: 'Clientes', icon: Users },
   { href: '/jurisprudencia', label: 'Jurisprudencia', icon: BookOpen },
   { href: '/equipo', label: 'Mi Despacho', icon: Building2 },
+  { href: '/configuracion', label: 'Configuración', icon: Settings },
 ]
 
 interface UserData {
@@ -50,31 +52,31 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r border-slate-200 bg-slate-900">
+    <aside className="relative z-10 flex h-full w-72 flex-col border-r border-[#2d3449]/50 bg-[rgba(19,27,46,0.7)] backdrop-blur-xl">
       {/* Logo */}
-      <div className="flex items-center gap-2 border-b border-slate-700 px-6 py-5">
-        <Scale className="h-7 w-7 text-blue-400" />
+      <div className="flex items-center gap-3 border-b border-[#2d3449]/30 px-8 py-8">
+        <Scale className="h-8 w-8 text-[#e9c176]" />
         <div>
-          <h1 className="text-lg font-bold text-white tracking-tight">Verioska Legal</h1>
-          <p className="text-[10px] text-slate-400 uppercase tracking-widest">Centro de Mando</p>
+          <h1 className="text-xl font-bold tracking-tight text-[#dae2fd]">Verioska</h1>
+          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#bdc8d3]">The Sovereign Ledger</p>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <nav className="flex-1 space-y-2 px-5 py-8">
         {navItems.map(item => {
           const isActive = pathname.startsWith(item.href)
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+              className={`flex items-center gap-4 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ${
                 isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                  ? 'bg-gradient-to-br from-[#222a3d] to-[#131b2e] text-[#e9c176] shadow-lg shadow-black/20 border border-[rgba(233,193,118,0.1)]'
+                  : 'text-[#c6c6cd] hover:bg-[#131b2e]/50 hover:text-[#dae2fd]'
               }`}
             >
-              <item.icon className="h-5 w-5" />
+              <item.icon className={`h-5 w-5 ${isActive ? 'text-[#e9c176]' : 'text-[#bdc8d3]'}`} strokeWidth={isActive ? 2.5 : 2} />
               {item.label}
             </Link>
           )
@@ -82,18 +84,18 @@ export function Sidebar() {
       </nav>
 
       {/* User */}
-      <div className="border-t border-slate-700 px-4 py-4">
+      <div className="border-t border-[#2d3449]/30 px-6 py-6 pb-8">
         {user && (
-          <div className="mb-3">
-            <p className="text-sm font-medium text-white truncate">
+          <div className="mb-4">
+            <p className="text-sm font-semibold text-[#dae2fd] truncate shadow-sm">
               {user.nombre} {user.apellidos}
             </p>
-            <p className="text-xs text-slate-400 truncate">{user.email}</p>
+            <p className="text-xs text-[#bdc8d3] truncate mt-0.5">{user.email}</p>
           </div>
         )}
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+          className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium text-[#c6c6cd] transition-colors hover:text-[#e9c176]"
         >
           <LogOut className="h-4 w-4" />
           Cerrar sesión

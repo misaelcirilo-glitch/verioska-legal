@@ -61,7 +61,8 @@ export function EquipoPanel({ currentUserId }: { currentUserId?: string }) {
   const [success, setSuccess] = useState('')
   const [editingMiembro, setEditingMiembro] = useState<string | null>(null)
   const [modo, setModo] = useState<'directo' | 'invitacion'>('directo')
-  const [isAdmin, setIsAdmin] = useState(false)
+
+  const isAdmin = miembros.find(m => m.id === currentUserId)?.rol === 'admin'
 
   async function loadData() {
     const res = await fetch('/api/equipo')
@@ -69,10 +70,6 @@ export function EquipoPanel({ currentUserId }: { currentUserId?: string }) {
     setMiembros(d.data || [])
     setDespacho(d.despacho || null)
     setInvitaciones(d.invitaciones || [])
-
-    // Determinar si el usuario actual es admin
-    const yo = (d.data || []).find((m: Miembro) => m.id === currentUserId)
-    setIsAdmin(yo?.rol === 'admin')
   }
 
   useEffect(() => { loadData() }, [])

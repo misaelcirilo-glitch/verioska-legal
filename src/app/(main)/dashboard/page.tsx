@@ -93,31 +93,31 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Centro de Mando</h1>
-        <p className="text-sm text-slate-500">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="mb-10">
+        <h1 className="text-4xl font-extrabold tracking-tight text-[#dae2fd]">Centro de Mando</h1>
+        <p className="mt-2 text-[0.9rem] font-medium uppercase tracking-widest text-[#bdc8d3]">
           {new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
         </p>
       </div>
 
       {/* Stats */}
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Expedientes Activos" value={stats.expedientes} icon={FolderOpen} color="blue" />
         <StatCard title="Plazos Críticos" value={stats.plazosCriticos} icon={AlertTriangle} color="red" />
         <StatCard title="Audiencias esta Semana" value={stats.audienciasSemana} icon={Calendar} color="yellow" />
         <StatCard title="Plazos Cumplidos" value={stats.plazosCumplidos} icon={CheckCircle} color="green" />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         {/* Plazos Urgentes */}
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-slate-900 flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-red-500" />
+        <div className="rounded-2xl border border-[rgba(69,70,77,0.15)] bg-[#131b2e] p-8 shadow-[0_20px_40px_rgba(6,14,32,0.4)]">
+          <h2 className="mb-6 flex items-center gap-3 text-lg font-bold text-[#dae2fd] tracking-wide">
+            <AlertTriangle className="h-5 w-5 text-[#ffb4ab]" />
             Plazos Urgentes
           </h2>
           {plazosUrgentes.length === 0 ? (
-            <p className="text-sm text-slate-500">No hay plazos urgentes. Todo en orden.</p>
+            <p className="text-sm text-[#c6c6cd]">No hay plazos urgentes. Todo en orden.</p>
           ) : (
             <div className="space-y-3">
               {plazosUrgentes.map(p => (
@@ -134,35 +134,35 @@ export default async function DashboardPage() {
         </div>
 
         {/* Próximas Audiencias */}
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-slate-900 flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-blue-500" />
+        <div className="rounded-2xl border border-[rgba(69,70,77,0.15)] bg-[#131b2e] p-8 shadow-[0_20px_40px_rgba(6,14,32,0.4)]">
+          <h2 className="mb-6 flex items-center gap-3 text-lg font-bold text-[#dae2fd] tracking-wide">
+            <Calendar className="h-5 w-5 text-[#bdc8d3]" />
             Próximas Audiencias
           </h2>
           {proximasAudiencias.length === 0 ? (
-            <p className="text-sm text-slate-500">No hay audiencias programadas.</p>
+            <p className="text-sm text-[#c6c6cd]">No hay audiencias programadas.</p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {proximasAudiencias.map(a => (
-                <div key={a.id} className="rounded-lg border border-slate-100 bg-slate-50 p-4">
+                <div key={a.id} className="rounded-xl border border-[#2d3449]/50 bg-[#060e20] p-5 transition-transform hover:-translate-y-0.5 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-slate-900">
+                      <p className="font-semibold text-[#dae2fd]">
                         {tipoAudienciaLabels[a.tipo_audiencia] || a.tipo_audiencia}
                       </p>
-                      <p className="text-sm text-slate-500">{a.nuc || a.delito}</p>
+                      <p className="text-sm text-[#c6c6cd] mt-1">{a.nuc || a.delito}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-semibold text-blue-600">
+                      <p className="text-sm font-bold text-[#e9c176]">
                         {new Date(a.fecha_programada).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-[#bdc8d3] mt-0.5">
                         {new Date(a.fecha_programada).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                   </div>
                   {a.juzgado && (
-                    <p className="mt-1 text-xs text-slate-400">{a.juzgado} {a.sala ? `• Sala ${a.sala}` : ''}</p>
+                    <p className="mt-3 text-xs uppercase tracking-wider text-[#78828d]">{a.juzgado} {a.sala ? `• Sala ${a.sala}` : ''}</p>
                   )}
                 </div>
               ))}

@@ -53,63 +53,66 @@ export default function SignupPage() {
     }
   }
 
+  const inputClass = "w-full rounded-lg border border-[rgba(69,70,77,0.3)] bg-[#060e20] text-[#dae2fd] px-3 py-2.5 text-sm focus:border-[#e9c176] focus:outline-none focus:ring-1 focus:ring-[#e9c176] placeholder:text-[#45464d] transition-all"
+  const labelClass = "mb-1 block text-[0.8rem] uppercase tracking-wider font-semibold text-[#8a94a2]"
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <h2 className="text-xl font-semibold text-slate-900">Crear Cuenta</h2>
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <h2 className="text-2xl font-bold tracking-tight text-[#dae2fd]">Crear Cuenta</h2>
 
       {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>
+        <div className="rounded-lg bg-[rgba(147,0,10,0.2)] border border-[rgba(147,0,10,0.5)] p-3 text-sm text-[#ffb4ab]">{error}</div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="nombre" className="mb-1 block text-sm font-medium text-slate-700">Nombre</label>
-          <input id="nombre" name="nombre" required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+          <label htmlFor="nombre" className={labelClass}>Nombre</label>
+          <input id="nombre" name="nombre" required className={inputClass} />
         </div>
         <div>
-          <label htmlFor="apellidos" className="mb-1 block text-sm font-medium text-slate-700">Apellidos</label>
-          <input id="apellidos" name="apellidos" required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+          <label htmlFor="apellidos" className={labelClass}>Apellidos</label>
+          <input id="apellidos" name="apellidos" required className={inputClass} />
         </div>
       </div>
 
       <div>
-        <label htmlFor="email" className="mb-1 block text-sm font-medium text-slate-700">Email</label>
-        <input id="email" name="email" type="email" required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="abogado@despacho.com" />
+        <label htmlFor="email" className={labelClass}>Email</label>
+        <input id="email" name="email" type="email" required className={inputClass} placeholder="abogado@despacho.com" />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="password" className="mb-1 block text-sm font-medium text-slate-700">Contraseña</label>
-          <input id="password" name="password" type="password" required minLength={8} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+          <label htmlFor="password" className={labelClass}>Contraseña</label>
+          <input id="password" name="password" type="password" required minLength={8} className={inputClass} placeholder="••••••••" />
         </div>
         <div>
-          <label htmlFor="confirmPassword" className="mb-1 block text-sm font-medium text-slate-700">Confirmar</label>
-          <input id="confirmPassword" name="confirmPassword" type="password" required minLength={8} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+          <label htmlFor="confirmPassword" className={labelClass}>Confirmar</label>
+          <input id="confirmPassword" name="confirmPassword" type="password" required minLength={8} className={inputClass} placeholder="••••••••" />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="cedulaProfesional" className="mb-1 block text-sm font-medium text-slate-700">Cédula <span className="text-slate-400">(opcional)</span></label>
-          <input id="cedulaProfesional" name="cedulaProfesional" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+          <label htmlFor="cedulaProfesional" className={labelClass}>Cédula <span className="text-[#45464d] font-normal lowercase">(opcional)</span></label>
+          <input id="cedulaProfesional" name="cedulaProfesional" className={inputClass} />
         </div>
         <div>
-          <label htmlFor="telefono" className="mb-1 block text-sm font-medium text-slate-700">Teléfono <span className="text-slate-400">(opcional)</span></label>
-          <input id="telefono" name="telefono" type="tel" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+          <label htmlFor="telefono" className={labelClass}>Teléfono <span className="text-[#45464d] font-normal lowercase">(opcional)</span></label>
+          <input id="telefono" name="telefono" type="tel" className={inputClass} />
         </div>
       </div>
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        className="mt-6 w-full rounded-lg bg-gradient-to-r from-[#172033] to-[#131b2e] border border-[rgba(233,193,118,0.3)] px-4 py-3 text-sm font-bold text-[#e9c176] hover:bg-gradient-to-r hover:from-[#1a243a] hover:to-[#172033] hover:shadow-[0_0_15px_rgba(233,193,118,0.2)] disabled:opacity-50 transition-all uppercase tracking-widest"
       >
-        {loading ? 'Registrando...' : 'Crear Cuenta'}
+        {loading ? 'Inicializando...' : 'Crear Cuenta'}
       </button>
 
-      <p className="text-center text-sm text-slate-500">
+      <p className="text-center text-[0.8rem] text-[#8a94a2] mt-4">
         ¿Ya tienes cuenta?{' '}
-        <Link href="/login" className="font-medium text-blue-600 hover:text-blue-700">
+        <Link href="/login" className="font-semibold text-[#e9c176] hover:text-white transition-colors">
           Inicia sesión
         </Link>
       </p>

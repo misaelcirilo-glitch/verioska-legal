@@ -40,16 +40,19 @@ export default function LoginPage() {
     }
   }
 
+  const inputClass = "w-full rounded-lg border border-[rgba(69,70,77,0.3)] bg-[#060e20] text-[#dae2fd] px-3 py-2.5 text-sm focus:border-[#e9c176] focus:outline-none focus:ring-1 focus:ring-[#e9c176] placeholder:text-[#45464d] transition-all"
+  const labelClass = "mb-1 block text-[0.8rem] uppercase tracking-wider font-semibold text-[#8a94a2]"
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <h2 className="text-xl font-semibold text-slate-900">Iniciar Sesión</h2>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <h2 className="text-2xl font-bold tracking-tight text-[#dae2fd]">Iniciar Sesión</h2>
 
       {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>
+        <div className="rounded-lg bg-[rgba(147,0,10,0.2)] border border-[rgba(147,0,10,0.5)] p-3 text-sm text-[#ffb4ab]">{error}</div>
       )}
 
       <div>
-        <label htmlFor="email" className="mb-1 block text-sm font-medium text-slate-700">
+        <label htmlFor="email" className={labelClass}>
           Email
         </label>
         <input
@@ -57,13 +60,13 @@ export default function LoginPage() {
           name="email"
           type="email"
           required
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className={inputClass}
           placeholder="abogado@despacho.com"
         />
       </div>
 
       <div>
-        <label htmlFor="password" className="mb-1 block text-sm font-medium text-slate-700">
+        <label htmlFor="password" className={labelClass}>
           Contraseña
         </label>
         <input
@@ -71,7 +74,7 @@ export default function LoginPage() {
           name="password"
           type="password"
           required
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className={inputClass}
           placeholder="••••••••"
         />
       </div>
@@ -79,14 +82,14 @@ export default function LoginPage() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        className="mt-6 w-full rounded-lg bg-gradient-to-r from-[#172033] to-[#131b2e] border border-[rgba(233,193,118,0.3)] px-4 py-3 text-sm font-bold text-[#e9c176] hover:bg-gradient-to-r hover:from-[#1a243a] hover:to-[#172033] hover:shadow-[0_0_15px_rgba(233,193,118,0.2)] disabled:opacity-50 transition-all uppercase tracking-widest"
       >
-        {loading ? 'Ingresando...' : 'Iniciar Sesión'}
+        {loading ? 'Ingresando...' : 'Entrar'}
       </button>
 
-      <p className="text-center text-sm text-slate-500">
+      <p className="text-center text-[0.8rem] text-[#8a94a2] mt-4">
         ¿No tienes cuenta?{' '}
-        <Link href="/signup" className="font-medium text-blue-600 hover:text-blue-700">
+        <Link href="/signup" className="font-semibold text-[#e9c176] hover:text-white transition-colors">
           Regístrate
         </Link>
       </p>

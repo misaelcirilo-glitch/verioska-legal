@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Plus, Users, Phone, Mail, X } from 'lucide-react'
 
 interface ClienteRow {
@@ -155,9 +156,9 @@ export default function ClientesPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-3">
-                    <h3 className="font-semibold text-slate-900">
+                    <Link href={`/clientes/${c.id}`} className="font-semibold text-blue-600 hover:underline">
                       {c.nombre} {c.apellidos || ''}
-                    </h3>
+                    </Link>
                     <span className={`rounded px-2 py-0.5 text-xs font-medium ${ESTADOS_BADGE[c.estado] || ''}`}>
                       {c.estado}
                     </span>
