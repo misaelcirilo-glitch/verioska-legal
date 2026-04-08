@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
-import { queryOne } from '@/lib/db'
+import { query, queryOne } from '@/lib/db'
 import { createToken } from '@/lib/auth'
 
 const loginSchema = z.object({
@@ -23,6 +23,9 @@ export async function POST(request: NextRequest) {
 
     const { email, password } = parsed.data
 
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null
+    const userAgent = request.headers.get('user-agent') || null
+
     const user = await queryOne<{
       id: string
       email: string
@@ -39,6 +42,10 @@ export async function POST(request: NextRequest) {
     )
 
     if (!user) {
+      await query(
+        `INSERT INTO accesos_log (email, tipo, ip, user_agent) VALUES ($1, 'login_fail', $2, $3)`,
+        [email, ip, userAgent]
+      ).catch(() => {})
       return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 })
     }
 
@@ -48,8 +55,18 @@ export async function POST(request: NextRequest) {
 
     const validPassword = await bcrypt.compare(password, user.password_hash)
     if (!validPassword) {
+      await query(
+        `INSERT INTO accesos_log (user_id, email, tipo, ip, user_agent) VALUES ($1, $2, 'login_fail', $3, $4)`,
+        [user.id, email, ip, userAgent]
+      ).catch(() => {})
       return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 })
     }
+
+    // Log login OK
+    await query(
+      `INSERT INTO accesos_log (user_id, email, tipo, ip, user_agent) VALUES ($1, $2, 'login_ok', $3, $4)`,
+      [user.id, email, ip, userAgent]
+    ).catch(() => {})
 
     const token = await createToken({
       userId: user.id,
