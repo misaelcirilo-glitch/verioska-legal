@@ -205,16 +205,16 @@ export function EquipoPanel({ currentUserId }: { currentUserId?: string }) {
               </button>
             </div>
             <form onSubmit={handleCrearDespacho} className="space-y-3">
-              <input name="nombre" placeholder="Nombre del despacho *" required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <input name="nombre" placeholder="Nombre del despacho *" required className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400" />
               <div className="grid grid-cols-2 gap-3">
-                <select name="pais" className="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                <select name="pais" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400">
                   <option value="MX">México</option>
                   <option value="PE">Perú</option>
                 </select>
-                <input name="telefono" placeholder="Teléfono" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                <input name="telefono" placeholder="Teléfono" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400" />
               </div>
-              <input name="email" type="email" placeholder="Email del despacho" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-              <input name="direccion" placeholder="Dirección" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <input name="email" type="email" placeholder="Email del despacho" className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400" />
+              <input name="direccion" placeholder="Dirección" className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400" />
               {error && <p className="text-xs text-red-600">{error}</p>}
               <button
                 type="submit"
@@ -307,8 +307,8 @@ export function EquipoPanel({ currentUserId }: { currentUserId?: string }) {
 
           <form onSubmit={handleAgregarMiembro} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <input name="email" type="email" placeholder="Email *" required className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-              <select name="rol" className="rounded-lg border border-slate-300 px-3 py-2 text-sm">
+              <input name="email" type="email" placeholder="Email *" required className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400" />
+              <select name="rol" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400">
                 <option value="abogado">Abogado</option>
                 <option value="pasante">Pasante</option>
                 <option value="asistente">Asistente</option>
@@ -319,14 +319,14 @@ export function EquipoPanel({ currentUserId }: { currentUserId?: string }) {
             {modo === 'directo' && (
               <>
                 <div className="grid grid-cols-2 gap-3">
-                  <input name="nombre" placeholder="Nombre *" required className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-                  <input name="apellidos" placeholder="Apellidos" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                  <input name="nombre" placeholder="Nombre *" required className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400" />
+                  <input name="apellidos" placeholder="Apellidos" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <input name="password" type="password" placeholder="Contraseña *" required minLength={8} className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-                  <input name="cedulaProfesional" placeholder="Cédula profesional" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                  <input name="password" type="password" placeholder="Contraseña *" required minLength={8} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400" />
+                  <input name="cedulaProfesional" placeholder="Cédula profesional" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400" />
                 </div>
-                <input name="telefono" placeholder="Teléfono" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                <input name="telefono" placeholder="Teléfono" className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400" />
               </>
             )}
 

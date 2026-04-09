@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { queryOne } from '@/lib/db'
 import { getSession } from '@/lib/auth'
-import { readFile } from 'fs/promises'
-import { join } from 'path'
 
 export async function GET(
   _request: NextRequest,
@@ -16,7 +14,7 @@ export async function GET(
 
     const { id, docId } = await params
 
-    // Verify ownership and get document
+    // Verify ownership and get document URL
     const doc = await queryOne<{
       ruta_archivo: string; nombre_archivo: string; tipo_archivo: string
     }>(
@@ -31,22 +29,34 @@ export async function GET(
       return NextResponse.json({ error: 'Documento no encontrado' }, { status: 404 })
     }
 
-    const filePath = join(process.cwd(), doc.ruta_archivo)
-    const fileBuffer = await readFile(filePath)
-
-    const contentTypes: Record<string, string> = {
-      pdf: 'application/pdf',
-      imagen: 'image/jpeg',
-      audio: 'audio/mpeg',
-      video: 'video/mp4',
+    // Si es URL absoluta (Vercel Blob), redirigir
+    if (doc.ruta_archivo.startsWith('http')) {
+      return NextResponse.redirect(doc.ruta_archivo)
     }
 
-    return new NextResponse(fileBuffer, {
-      headers: {
-        'Content-Type': contentTypes[doc.tipo_archivo] || 'application/octet-stream',
-        'Content-Disposition': `inline; filename="${doc.nombre_archivo}"`,
-      },
-    })
+    // Compatibilidad con archivos antiguos en filesystem (solo dev local)
+    try {
+      const { readFile } = await import('fs/promises')
+      const { join } = await import('path')
+      const filePath = join(process.cwd(), doc.ruta_archivo)
+      const fileBuffer = await readFile(filePath)
+
+      const contentTypes: Record<string, string> = {
+        pdf: 'application/pdf',
+        imagen: 'image/jpeg',
+        audio: 'audio/mpeg',
+        video: 'video/mp4',
+      }
+
+      return new NextResponse(new Uint8Array(fileBuffer), {
+        headers: {
+          'Content-Type': contentTypes[doc.tipo_archivo] || 'application/octet-stream',
+          'Content-Disposition': `inline; filename="${doc.nombre_archivo}"`,
+        },
+      })
+    } catch {
+      return NextResponse.json({ error: 'Archivo no disponible' }, { status: 404 })
+    }
   } catch (error) {
     console.error('GET archivo error:', error)
     return NextResponse.json({ error: 'Error al leer archivo' }, { status: 500 })

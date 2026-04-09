@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne } from '@/lib/db'
 import { getSession } from '@/lib/auth'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
+import { put } from '@vercel/blob'
 import { randomUUID } from 'crypto'
 
 async function verifyOwnership(expedienteId: string, userId: string) {
@@ -11,8 +10,6 @@ async function verifyOwnership(expedienteId: string, userId: string) {
     [expedienteId, userId]
   )
 }
-
-const UPLOAD_DIR = join(process.cwd(), 'uploads')
 
 const ALLOWED_EXTENSIONS: Record<string, string> = {
   'application/pdf': 'pdf',
@@ -134,21 +131,27 @@ export async function POST(
       return NextResponse.json({ error: 'Etapa procesal inválida' }, { status: 400 })
     }
 
-    // Create upload directory for this expediente
-    const expedienteDir = join(UPLOAD_DIR, id)
-    await mkdir(expedienteDir, { recursive: true })
+    // Subir a Vercel Blob (filesystem en serverless es read-only)
+    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
+    const blobPath = `expedientes/${id}/${randomUUID()}-${safeName}`
 
-    // Generate unique filename
-    const ext = file.name.split('.').pop() || 'bin'
-    const uniqueName = `${randomUUID()}.${ext}`
-    const filePath = join(expedienteDir, uniqueName)
-
-    // Write file to disk
-    const buffer = Buffer.from(await file.arrayBuffer())
-    await writeFile(filePath, buffer)
+    let blobUrl: string
+    try {
+      const blob = await put(blobPath, file, {
+        access: 'public',
+        addRandomSuffix: false,
+        contentType: file.type,
+      })
+      blobUrl = blob.url
+    } catch (uploadErr) {
+      console.error('Vercel Blob upload error:', uploadErr)
+      return NextResponse.json(
+        { error: 'No se pudo subir el archivo. Verifica que BLOB_READ_WRITE_TOKEN esté configurado en Vercel.' },
+        { status: 500 }
+      )
+    }
 
     // Save to database
-    const relativePath = `uploads/${id}/${uniqueName}`
     const documento = await queryOne(
       `INSERT INTO documentos (
         expediente_id, nombre_archivo, tipo_archivo, tipo_documento,
@@ -156,13 +159,13 @@ export async function POST(
       ) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
       [
         id, file.name, tipoArchivo, tipoDocumento || null,
-        etapaProcesal || null, relativePath, file.size,
+        etapaProcesal || null, blobUrl, file.size,
       ]
     )
 
     return NextResponse.json({ data: documento }, { status: 201 })
   } catch (error) {
     console.error('POST documento error:', error)
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Error interno del servidor' }, { status: 500 })
   }
 }

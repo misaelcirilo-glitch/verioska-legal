@@ -139,9 +139,9 @@ export default function NuevoExpedientePage() {
           </div>
         </div>
 
-        {/* Juzgado - Cascada */}
+        {/* Ubicacion Judicial */}
         <div className="rounded-lg border border-slate-200 bg-white p-6">
-          <h2 className="mb-4 text-base font-semibold text-slate-800">Ubicación Judicial (Cascada)</h2>
+          <h2 className="mb-4 text-base font-semibold text-slate-800">Ubicación Judicial</h2>
           <div className="space-y-4">
             <div>
               <label htmlFor="distritoJudicial" className={labelClass}>Distrito Judicial</label>
@@ -178,6 +178,16 @@ export default function NuevoExpedientePage() {
                   ))}
                 </select>
               </div>
+            </div>
+            <div>
+              <label htmlFor="despacho" className={labelClass}>Despacho (opcional)</label>
+              <input
+                id="despacho"
+                name="despacho"
+                type="text"
+                placeholder="Ej: 1er Despacho de Investigación"
+                className={inputClass}
+              />
             </div>
           </div>
         </div>

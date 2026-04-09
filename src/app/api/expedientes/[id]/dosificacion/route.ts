@@ -11,10 +11,11 @@ import {
 } from '@/features/dosificacion/services/calculador-penas'
 
 async function verifyOwnership(expedienteId: string, userId: string) {
-  return queryOne<{ id: string; pais: string; delito: string }>(
+  return queryOne<{ id: string; pais: string | null; delito: string | null }>(
     `SELECT e.id, e.pais, e.delito FROM expedientes e
-     JOIN despachos d ON e.despacho_id = d.id
-     WHERE e.id = $1 AND e.user_id = $2`,
+     WHERE e.id = $1
+       AND (e.user_id = $2
+            OR e.despacho_id = (SELECT despacho_id FROM users WHERE id = $2))`,
     [expedienteId, userId]
   )
 }

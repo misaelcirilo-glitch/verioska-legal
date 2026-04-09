@@ -10,13 +10,23 @@ async function verifyOwnership(expedienteId: string, userId: string) {
   )
 }
 
+// Tolerante con cadenas vacias del frontend
+const optionalString = z.preprocess(
+  (v) => (v === '' || v === null ? undefined : v),
+  z.string().optional()
+)
+const optionalUuid = z.preprocess(
+  (v) => (v === '' || v === null ? undefined : v),
+  z.string().uuid().optional()
+)
+
 const declaracionSchema = z.object({
   contenido: z.string().min(10, 'El contenido debe tener al menos 10 caracteres'),
-  parteId: z.string().uuid().optional(),
-  documentoId: z.string().uuid().optional(),
-  fechaDeclaracion: z.string().optional(),
+  parteId: optionalUuid,
+  documentoId: optionalUuid,
+  fechaDeclaracion: optionalString,
   tipo: z.enum(['ministerial', 'judicial', 'ampliacion', 'careo', 'informativa', 'pericial']),
-  contexto: z.string().optional(),
+  contexto: optionalString,
 })
 
 export async function GET(
