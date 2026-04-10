@@ -10,6 +10,7 @@ export function AgregarAudienciaForm({ expedienteId, pais = 'MX' }: { expediente
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [tipoSeleccionado, setTipoSeleccionado] = useState('')
 
   const tiposAudiencia = pais === 'PE' ? TIPOS_AUDIENCIA_PE : TIPOS_AUDIENCIA_MX
 
@@ -19,12 +20,14 @@ export function AgregarAudienciaForm({ expedienteId, pais = 'MX' }: { expediente
     setError('')
 
     const form = new FormData(e.currentTarget)
+    const tipo = form.get('tipoAudiencia') as string
+    const tipoCustom = form.get('tipoAudienciaCustom') as string
 
     const res = await fetch(`/api/expedientes/${expedienteId}/audiencias`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        tipoAudiencia: form.get('tipoAudiencia'),
+        tipoAudiencia: tipo === 'otra' && tipoCustom ? `otra:${tipoCustom}` : tipo,
         fechaProgramada: form.get('fechaProgramada'),
         sala: form.get('sala') || undefined,
         juzgado: form.get('juzgado') || undefined,
@@ -64,9 +67,22 @@ export function AgregarAudienciaForm({ expedienteId, pais = 'MX' }: { expediente
           <X className="h-4 w-4" />
         </button>
       </div>
-      <select name="tipoAudiencia" required className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm">
+      <select
+        name="tipoAudiencia" required
+        value={tipoSeleccionado}
+        onChange={e => setTipoSeleccionado(e.target.value)}
+        className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900"
+      >
+        <option value="">Seleccionar tipo...</option>
         {tiposAudiencia.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
       </select>
+      {tipoSeleccionado === 'otra' && (
+        <input
+          name="tipoAudienciaCustom" required
+          placeholder="Describe la diligencia..."
+          className="w-full rounded border border-blue-300 bg-white px-2 py-1.5 text-sm text-slate-900"
+        />
+      )}
       <div>
         <label className="text-xs text-slate-500">Fecha y hora</label>
         <input name="fechaProgramada" type="datetime-local" required className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />

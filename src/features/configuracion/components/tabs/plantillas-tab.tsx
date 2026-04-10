@@ -7,6 +7,7 @@ interface Plantilla {
   id: string
   nombre: string
   categoria: string
+  materia: string | null
   descripcion: string | null
   contenido: string
   variables: string[]
@@ -21,15 +22,23 @@ const CATEGORIAS = [
   { v: 'otro', label: 'Otro' },
 ]
 
-const VARIABLES_DISPONIBLES = ['cliente', 'expediente_numero', 'juzgado', 'fecha', 'abogado', 'monto']
+// Materias jurídicas — sirven para clasificar y buscar plantillas
+const MATERIAS = [
+  'penal', 'civil', 'laboral', 'familia', 'constitucional',
+  'administrativo', 'comercial', 'tributario', 'arbitraje', 'contencioso',
+]
+
+const CAMPOS_RELLENABLES = ['cliente', 'expediente_numero', 'juzgado', 'fecha', 'abogado', 'monto', 'distrito_judicial', 'fiscalia']
 
 export function PlantillasTab() {
   const [plantillas, setPlantillas] = useState<Plantilla[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Plantilla | null>(null)
-  const [form, setForm] = useState({ nombre: '', categoria: 'escrito', descripcion: '', contenido: '', variables: [] as string[] })
+  const [form, setForm] = useState({ nombre: '', categoria: 'escrito', materia: '', descripcion: '', contenido: '', variables: [] as string[] })
   const [saving, setSaving] = useState(false)
+  const [filtroMateria, setFiltroMateria] = useState('')
+  const [busqueda, setBusqueda] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -43,7 +52,7 @@ export function PlantillasTab() {
 
   const startNew = () => {
     setEditing(null)
-    setForm({ nombre: '', categoria: 'escrito', descripcion: '', contenido: '', variables: [] })
+    setForm({ nombre: '', categoria: 'escrito', materia: '', descripcion: '', contenido: '', variables: [] })
     setShowForm(true)
   }
 
@@ -52,12 +61,19 @@ export function PlantillasTab() {
     setForm({
       nombre: p.nombre,
       categoria: p.categoria,
+      materia: p.materia || '',
       descripcion: p.descripcion || '',
       contenido: p.contenido,
       variables: p.variables || [],
     })
     setShowForm(true)
   }
+
+  const plantillasFiltradas = plantillas.filter(p => {
+    const matchMateria = !filtroMateria || p.materia === filtroMateria
+    const matchBusqueda = !busqueda || p.nombre.toLowerCase().includes(busqueda.toLowerCase()) || p.descripcion?.toLowerCase().includes(busqueda.toLowerCase())
+    return matchMateria && matchBusqueda
+  })
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -106,22 +122,32 @@ export function PlantillasTab() {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="mb-1 block text-xs font-bold uppercase text-slate-500">Nombre</label>
               <input
                 type="text" required value={form.nombre}
                 onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-bold uppercase text-slate-500">Categoría</label>
+              <label className="mb-1 block text-xs font-bold uppercase text-slate-500">Tipo</label>
               <select
                 value={form.categoria} onChange={e => setForm(p => ({ ...p, categoria: e.target.value }))}
-                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 {CATEGORIAS.map(c => <option key={c.v} value={c.v}>{c.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-bold uppercase text-slate-500">Materia</label>
+              <select
+                value={form.materia} onChange={e => setForm(p => ({ ...p, materia: e.target.value }))}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="">Sin materia</option>
+                {MATERIAS.map(m => <option key={m} value={m}>{m.charAt(0).toUpperCase() + m.slice(1)}</option>)}
               </select>
             </div>
           </div>
@@ -136,10 +162,10 @@ export function PlantillasTab() {
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-bold uppercase text-slate-500">Variables disponibles</label>
-            <p className="mb-2 text-xs text-slate-500">Marca las variables que usarás. Insértalas en el contenido como <code className="rounded bg-slate-100 px-1">{'{{variable}}'}</code></p>
+            <label className="mb-1 block text-xs font-bold uppercase text-slate-500">Campos rellenables</label>
+            <p className="mb-2 text-xs text-slate-500">Marca los campos que usarás. Insértalos en el contenido como <code className="rounded bg-slate-100 px-1">{'{{campo}}'}</code></p>
             <div className="flex flex-wrap gap-2">
-              {VARIABLES_DISPONIBLES.map(v => (
+              {CAMPOS_RELLENABLES.map((v: string) => (
                 <button
                   key={v} type="button"
                   onClick={() => toggleVar(v)}
@@ -180,29 +206,61 @@ export function PlantillasTab() {
           <p className="mt-1 text-sm text-slate-400">Crea modelos de escritos legales reutilizables con campos rellenables.</p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {plantillas.map(p => (
-            <div key={p.id} className="flex items-start justify-between rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <FileText size={16} className="text-slate-400" />
-                  <p className="font-medium text-slate-800">{p.nombre}</p>
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{CATEGORIAS.find(c => c.v === p.categoria)?.label}</span>
-                </div>
-                {p.descripcion && <p className="mt-1 text-sm text-slate-500">{p.descripcion}</p>}
-                {p.variables?.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {p.variables.map(v => <span key={v} className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">{`{{${v}}}`}</span>)}
+        <>
+          {/* Filtros */}
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <input
+              type="text" value={busqueda}
+              onChange={e => setBusqueda(e.target.value)}
+              placeholder="Buscar plantilla..."
+              className="flex-1 min-w-[200px] rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <button
+              onClick={() => setFiltroMateria('')}
+              className={`rounded-full px-3 py-1 text-xs font-medium border ${!filtroMateria ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-300'}`}
+            >
+              Todas
+            </button>
+            {MATERIAS.map(m => (
+              <button
+                key={m}
+                onClick={() => setFiltroMateria(filtroMateria === m ? '' : m)}
+                className={`rounded-full px-3 py-1 text-xs font-medium border capitalize ${filtroMateria === m ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-2">
+            {plantillasFiltradas.length === 0 ? (
+              <p className="py-8 text-center text-sm text-slate-400">Sin plantillas que coincidan con la búsqueda.</p>
+            ) : plantillasFiltradas.map(p => (
+              <div key={p.id} className="flex items-start justify-between rounded-lg border border-slate-200 p-4 hover:bg-slate-50">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <FileText size={16} className="text-slate-400" />
+                    <p className="font-medium text-slate-800">{p.nombre}</p>
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{CATEGORIAS.find(c => c.v === p.categoria)?.label}</span>
+                    {p.materia && (
+                      <span className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700 capitalize">{p.materia}</span>
+                    )}
                   </div>
-                )}
+                  {p.descripcion && <p className="mt-1 text-sm text-slate-500">{p.descripcion}</p>}
+                  {p.variables?.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {p.variables.map(v => <span key={v} className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">{`{{${v}}}`}</span>)}
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-1">
+                  <button onClick={() => startEdit(p)} className="rounded p-2 text-slate-400 hover:bg-slate-100 hover:text-blue-600"><Edit2 size={15} /></button>
+                  <button onClick={() => handleDelete(p.id)} className="rounded p-2 text-slate-400 hover:bg-slate-100 hover:text-red-600"><Trash2 size={15} /></button>
+                </div>
               </div>
-              <div className="flex gap-1">
-                <button onClick={() => startEdit(p)} className="rounded p-2 text-slate-400 hover:bg-slate-100 hover:text-blue-600"><Edit2 size={15} /></button>
-                <button onClick={() => handleDelete(p.id)} className="rounded p-2 text-slate-400 hover:bg-slate-100 hover:text-red-600"><Trash2 size={15} /></button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   )

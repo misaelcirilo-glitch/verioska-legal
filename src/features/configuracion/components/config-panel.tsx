@@ -15,7 +15,7 @@ const TABS = [
   { id: 'seguridad', label: 'Seguridad y Permisos', icon: Shield },
   { id: 'preferencias', label: 'Preferencias', icon: Palette },
   { id: 'plantillas', label: 'Plantillas', icon: FileText },
-  { id: 'integraciones', label: 'Integraciones', icon: LinkIcon },
+  { id: 'integraciones', label: 'Vinculaciones', icon: LinkIcon },
 ]
 
 export function ConfigPanel() {

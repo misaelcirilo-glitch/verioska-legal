@@ -63,7 +63,7 @@ export function IntegracionesTab() {
 
   return (
     <div>
-      <h2 className="mb-6 text-lg font-semibold text-slate-800">Integraciones</h2>
+      <h2 className="mb-6 text-lg font-semibold text-slate-800">Vinculaciones</h2>
       <p className="mb-6 text-sm text-slate-500">
         Conecta servicios externos para extender las capacidades de Verioska.
         La configuración detallada (OAuth, credenciales) estará disponible en la próxima versión.

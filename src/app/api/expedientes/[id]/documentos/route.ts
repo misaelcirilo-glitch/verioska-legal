@@ -60,8 +60,10 @@ export async function GET(
       ruta_archivo: string; tamano_bytes: number | null
       procesado: boolean; texto_extraido: string | null
       metadata: Record<string, unknown>; created_at: string
+      numero_orden: number | null; formato_disponibilidad: string | null
+      num_paginas: number | null
     }>(
-      'SELECT * FROM documentos WHERE expediente_id = $1 ORDER BY created_at DESC',
+      'SELECT * FROM documentos WHERE expediente_id = $1 ORDER BY numero_orden ASC NULLS LAST, created_at DESC',
       [id]
     )
 
@@ -77,6 +79,9 @@ export async function GET(
       textoExtraido: d.texto_extraido,
       metadata: d.metadata,
       createdAt: d.created_at,
+      numeroOrden: d.numero_orden,
+      formatoDisponibilidad: d.formato_disponibilidad,
+      numPaginas: d.num_paginas,
     }))
 
     return NextResponse.json({ data })
@@ -106,6 +111,7 @@ export async function POST(
     const file = formData.get('archivo') as File | null
     const tipoDocumento = formData.get('tipoDocumento') as string | null
     const etapaProcesal = formData.get('etapaProcesal') as string | null
+    const formatoDisponibilidad = (formData.get('formatoDisponibilidad') as string) || 'virtual'
 
     if (!file) {
       return NextResponse.json({ error: 'Archivo requerido' }, { status: 400 })
@@ -151,15 +157,38 @@ export async function POST(
       )
     }
 
+    // Detectar paginas si es PDF (heuristica simple sin librerias externas)
+    let numPaginas: number | null = null
+    if (tipoArchivo === 'pdf') {
+      try {
+        const buffer = Buffer.from(await file.arrayBuffer())
+        const text = buffer.toString('latin1')
+        // Cuenta marcadores /Type /Page (no /Pages) — funciona para la mayoria de PDFs
+        const matches = text.match(/\/Type\s*\/Page[^s]/g)
+        if (matches) numPaginas = matches.length
+      } catch {
+        // Si falla, dejamos null
+      }
+    }
+
+    // Calcular siguiente numero_orden para este expediente
+    const maxOrden = await queryOne<{ max: number }>(
+      'SELECT COALESCE(MAX(numero_orden), 0) as max FROM documentos WHERE expediente_id = $1',
+      [id]
+    )
+    const numeroOrden = (maxOrden?.max || 0) + 1
+
     // Save to database
     const documento = await queryOne(
       `INSERT INTO documentos (
         expediente_id, nombre_archivo, tipo_archivo, tipo_documento,
-        etapa_procesal, ruta_archivo, tamano_bytes
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+        etapa_procesal, ruta_archivo, tamano_bytes,
+        numero_orden, formato_disponibilidad, num_paginas
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
       [
         id, file.name, tipoArchivo, tipoDocumento || null,
         etapaProcesal || null, blobUrl, file.size,
+        numeroOrden, formatoDisponibilidad, numPaginas,
       ]
     )
 

@@ -43,6 +43,7 @@ export function UploadDocumentoForm({ expedienteId, etapaActual }: Props) {
   const [file, setFile] = useState<File | null>(null)
   const [tipoDocumento, setTipoDocumento] = useState('')
   const [etapaProcesal, setEtapaProcesal] = useState(etapaActual)
+  const [formato, setFormato] = useState<'virtual' | 'fisico' | 'ambos'>('virtual')
   const fileRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
 
@@ -70,6 +71,7 @@ export function UploadDocumentoForm({ expedienteId, etapaActual }: Props) {
     formData.append('archivo', file)
     if (tipoDocumento) formData.append('tipoDocumento', tipoDocumento)
     if (etapaProcesal) formData.append('etapaProcesal', etapaProcesal)
+    formData.append('formatoDisponibilidad', formato)
 
     try {
       const res = await fetch(`/api/expedientes/${expedienteId}/documentos`, {
@@ -167,6 +169,31 @@ export function UploadDocumentoForm({ expedienteId, etapaActual }: Props) {
               <option key={e.value} value={e.value}>{e.label}</option>
             ))}
           </select>
+        </div>
+      </div>
+
+      {/* Formato disponibilidad */}
+      <div>
+        <label className="mb-1 block text-xs font-medium text-slate-600">Formato disponible</label>
+        <div className="flex gap-2">
+          {[
+            { v: 'virtual' as const, label: 'Digital' },
+            { v: 'fisico' as const, label: 'Físico' },
+            { v: 'ambos' as const, label: 'Ambos' },
+          ].map(f => (
+            <button
+              key={f.v}
+              type="button"
+              onClick={() => setFormato(f.v)}
+              className={`flex-1 rounded border px-2 py-1.5 text-xs font-medium transition ${
+                formato === f.v
+                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
       </div>
 

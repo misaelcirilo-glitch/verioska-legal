@@ -6,6 +6,7 @@ import { query, queryOne } from '@/lib/db'
 const schema = z.object({
   nombre: z.string().min(1).optional(),
   categoria: z.enum(['escrito', 'demanda', 'contestacion', 'recurso', 'otro']).optional(),
+  materia: z.preprocess((v) => (v === '' || v === null ? undefined : v), z.string().optional()),
   descripcion: z.string().optional(),
   contenido: z.string().min(1).optional(),
   variables: z.array(z.string()).optional(),

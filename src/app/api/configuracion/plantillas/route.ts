@@ -25,6 +25,7 @@ export async function GET() {
 const schema = z.object({
   nombre: z.string().min(1, 'Nombre requerido'),
   categoria: z.enum(CATEGORIAS),
+  materia: z.preprocess((v) => (v === '' || v === null ? undefined : v), z.string().optional()),
   descripcion: z.string().optional(),
   contenido: z.string().min(1, 'Contenido requerido'),
   variables: z.array(z.string()).optional(),
@@ -49,12 +50,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Sin despacho asignado' }, { status: 400 })
   }
 
-  const { nombre, categoria, descripcion, contenido, variables } = parsed.data
+  const { nombre, categoria, materia, descripcion, contenido, variables } = parsed.data
 
   const plantilla = await queryOne(
-    `INSERT INTO plantillas_despacho (despacho_id, nombre, categoria, descripcion, contenido, variables, creado_por)
-     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-    [user.despacho_id, nombre, categoria, descripcion || null, contenido, JSON.stringify(variables || []), session.userId]
+    `INSERT INTO plantillas_despacho (despacho_id, nombre, categoria, materia, descripcion, contenido, variables, creado_por)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+    [user.despacho_id, nombre, categoria, materia || null, descripcion || null, contenido, JSON.stringify(variables || []), session.userId]
   )
 
   return NextResponse.json({ data: plantilla }, { status: 201 })

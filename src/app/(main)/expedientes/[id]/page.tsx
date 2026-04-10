@@ -20,7 +20,6 @@ import { ConsultaExpediente } from '@/features/rag/components/consulta-expedient
 import { etapaLabels, tipoAudienciaLabels, tipoParteLabels } from '@/lib/paises/labels'
 import { GastosPanel } from '@/features/finanzas/components/gastos-panel'
 import { PagosPanel } from '@/features/finanzas/components/pagos-panel'
-import JurisprudenciaPanel from '@/features/jurisprudencia/components/jurisprudencia-panel'
 import DosificacionPanel from '@/features/dosificacion/components/dosificacion-panel'
 import InterrogatorioPanel from '@/features/interrogatorio/components/interrogatorio-panel'
 import CerebroPanel from '@/features/cerebro/components/cerebro-panel'
@@ -317,9 +316,8 @@ export default async function ExpedienteDetailPage({
         <CerebroPanel expedienteId={id} />
       </div>
 
-      {/* Jurisprudencia + Dosificación */}
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <JurisprudenciaPanel pais={pais} />
+      {/* Dosificación */}
+      <div className="mt-6">
         <DosificacionPanel expedienteId={id} pais={pais} />
       </div>
 

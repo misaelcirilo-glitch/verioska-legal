@@ -35,6 +35,7 @@ export default function NuevoExpedientePage() {
     try {
       const body: Record<string, unknown> = {
         pais: 'PE',
+        materia: fd.get('materia') || undefined,
         delito: fd.get('delito'),
         distritoJudicial: fd.get('distritoJudicial') || undefined,
         juzgado: fd.get('juzgado') || undefined,
@@ -101,10 +102,25 @@ export default function NuevoExpedientePage() {
         <div className="rounded-lg border border-slate-200 bg-white p-6">
           <h2 className="mb-4 text-base font-semibold text-slate-800">Datos del Caso</h2>
           <div className="space-y-4">
-            <div>
-              <label htmlFor="delito" className={labelClass}>Delito *</label>
-              <input id="delito" name="delito" required className={inputClass}
-                placeholder="Ej: Robo agravado, Tráfico ilícito de drogas..." />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="materia" className={labelClass}>Materia *</label>
+                <select id="materia" name="materia" required className={inputClass} defaultValue="penal">
+                  <option value="penal">Penal</option>
+                  <option value="civil">Civil</option>
+                  <option value="laboral">Laboral</option>
+                  <option value="familia">Familia</option>
+                  <option value="constitucional">Constitucional</option>
+                  <option value="administrativo">Administrativo</option>
+                  <option value="comercial">Comercial</option>
+                  <option value="tributario">Tributario</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="delito" className={labelClass}>Delito / Asunto *</label>
+                <input id="delito" name="delito" required className={inputClass}
+                  placeholder="Ej: Robo agravado, Despido arbitrario..." />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
