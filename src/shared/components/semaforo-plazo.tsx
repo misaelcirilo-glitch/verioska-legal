@@ -10,12 +10,12 @@ interface SemaforoPlazoProps {
 }
 
 const estadoConfig = {
-  activo: { color: 'bg-green-400', bgLight: 'bg-[rgba(140,214,155,0.1)] border-[rgba(140,214,155,0.2)]', text: 'text-[#8cd69b]', label: 'En tiempo' },
-  proximo: { color: 'bg-[#e9c176]', bgLight: 'bg-[rgba(233,193,118,0.1)] border-[rgba(233,193,118,0.2)]', text: 'text-[#e9c176]', label: 'Próximo' },
-  critico: { color: 'bg-[#ffb4ab] animate-pulse shadow-[0_0_15px_rgba(255,180,171,0.3)]', bgLight: 'bg-[rgba(255,180,171,0.1)] border-[rgba(255,180,171,0.3)]', text: 'text-[#ffb4ab]', label: 'CRÍTICO' },
-  vencido: { color: 'bg-[#93000a]', bgLight: 'bg-[rgba(147,0,10,0.2)] border-[rgba(147,0,10,0.5)]', text: 'text-[#ffb4ab]', label: 'VENCIDO' },
-  cumplido: { color: 'bg-[#bdc8d3]', bgLight: 'bg-[#060e20] border-white/5', text: 'text-[#c6c6cd]', label: 'Cumplido' },
-  cancelado: { color: 'bg-[#45464d]', bgLight: 'bg-[#060e20] border-white/5', text: 'text-[#78828d]', label: 'Cancelado' },
+  activo: { color: 'bg-green-500', bg: 'bg-green-50 border-green-200', text: 'text-green-700', label: 'En tiempo' },
+  proximo: { color: 'bg-amber-500', bg: 'bg-amber-50 border-amber-200', text: 'text-amber-700', label: 'Próximo' },
+  critico: { color: 'bg-red-500 animate-pulse', bg: 'bg-red-50 border-red-200', text: 'text-red-700', label: 'CRÍTICO' },
+  vencido: { color: 'bg-red-800', bg: 'bg-red-50 border-red-300', text: 'text-red-800', label: 'VENCIDO' },
+  cumplido: { color: 'bg-slate-400', bg: 'bg-slate-50 border-slate-200', text: 'text-slate-500', label: 'Cumplido' },
+  cancelado: { color: 'bg-slate-300', bg: 'bg-slate-50 border-slate-200', text: 'text-slate-400', label: 'Cancelado' },
 }
 
 function calcTiempoRestante(fechaLimite: string): string {
@@ -38,8 +38,6 @@ function calcProgreso(fechaLimite: string): number {
   const ahora = Date.now()
   const diff = limite - ahora
   if (diff <= 0) return 100
-
-  // Estimamos duración total como el doble del tiempo restante (simplificación visual)
   const progreso = Math.max(0, Math.min(100, 100 - (diff / (diff * 2)) * 100))
   return progreso
 }
@@ -56,32 +54,29 @@ export function SemaforoPlazo({ estado, fechaLimite, nombre, fundamentoLegal }: 
   }, [fechaLimite])
 
   return (
-    <div className={`rounded-xl border p-5 ${config.bgLight}`}>
-      <div className="flex items-center justify-between mb-3">
-        <div className="pr-4">
-          <p className={`font-semibold tracking-wide ${config.text}`}>{nombre}</p>
+    <div className={`rounded-lg border p-4 ${config.bg}`}>
+      <div className="flex items-center justify-between mb-2">
+        <div className="pr-4 flex-1 min-w-0">
+          <p className={`font-semibold text-sm ${config.text}`}>{nombre}</p>
           {fundamentoLegal && (
-            <p className="text-xs text-[#78828d] mt-1.5 leading-relaxed">{fundamentoLegal}</p>
+            <p className="text-xs text-slate-500 mt-1">{fundamentoLegal}</p>
           )}
         </div>
-        <div className="text-right flex-shrink-0">
-          <span className={`inline-flex items-center rounded-md px-2.5 py-1 text-[0.7rem] uppercase tracking-wider font-bold border ${config.bgLight} ${config.text}`}>
+        <div className="text-right shrink-0">
+          <span className={`inline-block rounded-md px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold ${config.bg} ${config.text}`}>
             {config.label}
           </span>
-          <p className={`text-xl font-bold tracking-tight ${config.text} mt-2`}>{tiempoRestante}</p>
+          <p className={`text-lg font-bold mt-1 ${config.text}`}>{tiempoRestante}</p>
         </div>
       </div>
-      <div className="h-1.5 w-full rounded-full bg-[#060e20] overflow-hidden mt-2">
+      <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all duration-1000 ease-in-out ${config.color}`}
+          className={`h-full rounded-full transition-all duration-1000 ${config.color}`}
           style={{ width: `${estado === 'vencido' ? 100 : calcProgreso(fechaLimite)}%` }}
         />
       </div>
-      <p className="mt-3 text-[0.7rem] font-medium text-[#78828d] uppercase tracking-widest">
-        Vence: {new Date(fechaLimite).toLocaleString('es-MX', {
-          dateStyle: 'medium',
-          timeStyle: 'short',
-        })}
+      <p className="mt-2 text-[10px] font-medium text-slate-400 uppercase tracking-widest">
+        Vence: {new Date(fechaLimite).toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}
       </p>
     </div>
   )

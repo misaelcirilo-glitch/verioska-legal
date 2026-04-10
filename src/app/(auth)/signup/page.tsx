@@ -53,25 +53,25 @@ export default function SignupPage() {
     }
   }
 
-  const inputClass = "w-full rounded-lg border border-[rgba(69,70,77,0.3)] bg-[#060e20] text-[#dae2fd] px-3 py-2.5 text-sm focus:border-[#e9c176] focus:outline-none focus:ring-1 focus:ring-[#e9c176] placeholder:text-[#45464d] transition-all"
-  const labelClass = "mb-1 block text-[0.8rem] uppercase tracking-wider font-semibold text-[#8a94a2]"
+  const inputClass = "w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-slate-400 transition-all"
+  const labelClass = "mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500"
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <h2 className="text-2xl font-bold tracking-tight text-[#dae2fd]">Crear Cuenta</h2>
+      <h2 className="text-xl font-bold text-slate-900">Crear cuenta</h2>
 
       {error && (
-        <div className="rounded-lg bg-[rgba(147,0,10,0.2)] border border-[rgba(147,0,10,0.5)] p-3 text-sm text-[#ffb4ab]">{error}</div>
+        <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">{error}</div>
       )}
 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="nombre" className={labelClass}>Nombre</label>
-          <input id="nombre" name="nombre" required className={inputClass} />
+          <input id="nombre" name="nombre" required className={inputClass} placeholder="Juan" />
         </div>
         <div>
           <label htmlFor="apellidos" className={labelClass}>Apellidos</label>
-          <input id="apellidos" name="apellidos" required className={inputClass} />
+          <input id="apellidos" name="apellidos" required className={inputClass} placeholder="Pérez García" />
         </div>
       </div>
 
@@ -83,38 +83,36 @@ export default function SignupPage() {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="password" className={labelClass}>Contraseña</label>
-          <input id="password" name="password" type="password" required minLength={8} className={inputClass} placeholder="••••••••" />
+          <input id="password" name="password" type="password" required minLength={8} className={inputClass} placeholder="Mínimo 8 caracteres" />
         </div>
         <div>
           <label htmlFor="confirmPassword" className={labelClass}>Confirmar</label>
-          <input id="confirmPassword" name="confirmPassword" type="password" required minLength={8} className={inputClass} placeholder="••••••••" />
+          <input id="confirmPassword" name="confirmPassword" type="password" required minLength={8} className={inputClass} placeholder="Repetir contraseña" />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="cedulaProfesional" className={labelClass}>Cédula <span className="text-[#45464d] font-normal lowercase">(opcional)</span></label>
+          <label htmlFor="cedulaProfesional" className={labelClass}>Cédula <span className="text-slate-400 font-normal lowercase">(opcional)</span></label>
           <input id="cedulaProfesional" name="cedulaProfesional" className={inputClass} />
         </div>
         <div>
-          <label htmlFor="telefono" className={labelClass}>Teléfono <span className="text-[#45464d] font-normal lowercase">(opcional)</span></label>
-          <input id="telefono" name="telefono" type="tel" className={inputClass} />
+          <label htmlFor="telefono" className={labelClass}>Teléfono <span className="text-slate-400 font-normal lowercase">(opcional)</span></label>
+          <input id="telefono" name="telefono" type="tel" className={inputClass} placeholder="678080701" />
         </div>
       </div>
 
       <button
         type="submit"
         disabled={loading}
-        className="mt-6 w-full rounded-lg bg-gradient-to-r from-[#172033] to-[#131b2e] border border-[rgba(233,193,118,0.3)] px-4 py-3 text-sm font-bold text-[#e9c176] hover:bg-gradient-to-r hover:from-[#1a243a] hover:to-[#172033] hover:shadow-[0_0_15px_rgba(233,193,118,0.2)] disabled:opacity-50 transition-all uppercase tracking-widest"
+        className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
       >
-        {loading ? 'Inicializando...' : 'Crear Cuenta'}
+        {loading ? 'Creando cuenta...' : 'Crear cuenta'}
       </button>
 
-      <p className="text-center text-[0.8rem] text-[#8a94a2] mt-4">
+      <p className="text-center text-sm text-slate-500">
         ¿Ya tienes cuenta?{' '}
-        <Link href="/login" className="font-semibold text-[#e9c176] hover:text-white transition-colors">
-          Inicia sesión
-        </Link>
+        <Link href="/login" className="font-semibold text-blue-600 hover:text-blue-800 transition-colors">Inicia sesión</Link>
       </p>
     </form>
   )

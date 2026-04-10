@@ -52,31 +52,33 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="relative z-10 flex h-full w-72 flex-col border-r border-[#2d3449]/50 bg-[rgba(19,27,46,0.7)] backdrop-blur-xl">
+    <aside className="flex h-full w-64 flex-col border-r border-slate-200 bg-white">
       {/* Logo */}
-      <div className="flex items-center gap-3 border-b border-[#2d3449]/30 px-8 py-8">
-        <Scale className="h-8 w-8 text-[#e9c176]" />
+      <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-6">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white">
+          <Scale className="h-5 w-5" />
+        </div>
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-[#dae2fd]">Verioska</h1>
-          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#bdc8d3]">The Sovereign Ledger</p>
+          <h1 className="text-lg font-bold text-slate-900">Verioska</h1>
+          <p className="text-[10px] font-semibold tracking-[0.15em] uppercase text-slate-400">Legal Platform</p>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-2 px-5 py-8">
+      <nav className="flex-1 space-y-1 px-3 py-4">
         {navItems.map(item => {
           const isActive = pathname.startsWith(item.href)
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-4 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ${
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                 isActive
-                  ? 'bg-gradient-to-br from-[#222a3d] to-[#131b2e] text-[#e9c176] shadow-lg shadow-black/20 border border-[rgba(233,193,118,0.1)]'
-                  : 'text-[#c6c6cd] hover:bg-[#131b2e]/50 hover:text-[#dae2fd]'
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
               }`}
             >
-              <item.icon className={`h-5 w-5 ${isActive ? 'text-[#e9c176]' : 'text-[#bdc8d3]'}`} strokeWidth={isActive ? 2.5 : 2} />
+              <item.icon className={`h-5 w-5 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} strokeWidth={isActive ? 2.5 : 2} />
               {item.label}
             </Link>
           )
@@ -84,18 +86,19 @@ export function Sidebar() {
       </nav>
 
       {/* User */}
-      <div className="border-t border-[#2d3449]/30 px-6 py-6 pb-8">
+      <div className="border-t border-slate-200 px-4 py-4">
         {user && (
-          <div className="mb-4">
-            <p className="text-sm font-semibold text-[#dae2fd] truncate shadow-sm">
+          <div className="mb-3 rounded-lg bg-slate-50 px-3 py-2.5">
+            <p className="text-sm font-semibold text-slate-800 truncate">
               {user.nombre} {user.apellidos}
             </p>
-            <p className="text-xs text-[#bdc8d3] truncate mt-0.5">{user.email}</p>
+            <p className="text-xs text-slate-500 truncate mt-0.5">{user.email}</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-blue-600 mt-1">{user.rol}</p>
           </div>
         )}
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-sm font-medium text-[#c6c6cd] transition-colors hover:text-[#e9c176]"
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600"
         >
           <LogOut className="h-4 w-4" />
           Cerrar sesión

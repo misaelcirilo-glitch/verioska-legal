@@ -1,16 +1,18 @@
+import { Scale } from 'lucide-react'
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0b1326] antialiased">
-      <div className="w-full max-w-md relative z-10">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 antialiased">
+      <div className="w-full max-w-md px-4">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-extrabold text-[#dae2fd] tracking-tight">Verioska</h1>
-          <p className="mt-2 text-[0.75rem] uppercase tracking-widest text-[#e9c176]">The Sovereign Ledger</p>
-        </div>
-        <div className="relative overflow-hidden rounded-2xl border border-[rgba(69,70,77,0.2)] bg-[#131b2e] p-8 shadow-[0_30px_60px_rgba(6,14,32,0.6)] backdrop-blur-xl">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-white/5 to-transparent opacity-50 rounded-bl-[100px] pointer-events-none" />
-          <div className="relative z-10">
-            {children}
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white">
+            <Scale className="h-6 w-6" />
           </div>
+          <h1 className="text-2xl font-bold text-slate-900">Verioska Legal</h1>
+          <p className="mt-1 text-sm text-slate-500">Plataforma de gestión procesal</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          {children}
         </div>
       </div>
     </div>
