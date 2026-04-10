@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Loader2, Plus, FileText, Edit2, Trash2, X } from 'lucide-react'
+import { Loader2, Plus, FileText, Edit2, Trash2, X, Download } from 'lucide-react'
 
 interface Plantilla {
   id: string
@@ -254,6 +254,7 @@ export function PlantillasTab() {
                   )}
                 </div>
                 <div className="flex gap-1">
+                  <a href={`/api/configuracion/plantillas/descargar?id=${p.id}`} download className="rounded p-2 text-slate-400 hover:bg-slate-100 hover:text-green-600" title="Descargar Word"><Download size={15} /></a>
                   <button onClick={() => startEdit(p)} className="rounded p-2 text-slate-400 hover:bg-slate-100 hover:text-blue-600"><Edit2 size={15} /></button>
                   <button onClick={() => handleDelete(p.id)} className="rounded p-2 text-slate-400 hover:bg-slate-100 hover:text-red-600"><Trash2 size={15} /></button>
                 </div>
