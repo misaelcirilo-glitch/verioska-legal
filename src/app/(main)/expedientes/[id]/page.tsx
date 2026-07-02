@@ -8,6 +8,7 @@ import { SemaforoPlazo } from '@/shared/components/semaforo-plazo'
 import { GenerarPlazosButton } from './generar-plazos-button'
 import { ExpedienteAcciones } from './expediente-acciones'
 import { AgregarParteForm } from './agregar-parte-form'
+import { PartesLista } from './partes-lista'
 import { AgregarAudienciaForm } from './agregar-audiencia-form'
 import { AgregarPlazoForm } from './agregar-plazo-form'
 import { UploadDocumentoForm } from '@/features/documentos/components/upload-documento-form'
@@ -18,7 +19,7 @@ import { AgregarDeclaracionForm } from '@/features/contradicciones/components/ag
 import { EstrategiaPanel } from '@/features/estrategia/components/estrategia-panel'
 import { EscritosPanel } from '@/features/escritos/components/escritos-panel'
 import { ConsultaExpediente } from '@/features/rag/components/consulta-expediente'
-import { etapaLabels, tipoAudienciaLabels, tipoParteLabels } from '@/lib/paises/labels'
+import { etapaLabels, tipoAudienciaLabels } from '@/lib/paises/labels'
 import { GastosPanel } from '@/features/finanzas/components/gastos-panel'
 import { PagosPanel } from '@/features/finanzas/components/pagos-panel'
 import DosificacionPanel from '@/features/dosificacion/components/dosificacion-panel'
@@ -89,8 +90,13 @@ export default async function ExpedienteDetailPage({
     ),
     query<{
       id: string; tipo: string; nombre: string; apellidos: string | null
+      alias: string | null; edad: number | null; genero: string | null; notas: string | null
+      cliente_id: string | null; es_principal: boolean; cliente_nombre: string | null
     }>(
-      'SELECT * FROM partes WHERE expediente_id = $1 ORDER BY created_at',
+      `SELECT p.*, c.nombre AS cliente_nombre
+         FROM partes p LEFT JOIN clientes c ON c.id = p.cliente_id
+        WHERE p.expediente_id = $1
+        ORDER BY p.es_principal DESC, p.created_at`,
       [id]
     ),
     query<{
@@ -279,18 +285,7 @@ export default async function ExpedienteDetailPage({
             <h2 className="mb-4 text-base font-semibold text-slate-800 flex items-center gap-2">
               <Users className="h-5 w-5 text-slate-500" /> Partes
             </h2>
-            {partes.length === 0 ? (
-              <p className="text-sm text-slate-500">Sin partes registradas.</p>
-            ) : (
-              <div className="space-y-2">
-                {partes.map(p => (
-                  <div key={p.id} className="flex items-center justify-between rounded border border-slate-100 bg-slate-50 p-3">
-                    <span className="text-sm font-medium">{p.nombre} {p.apellidos || ''}</span>
-                    <Badge variant="neutral">{tipoParteLabels[p.tipo] || p.tipo}</Badge>
-                  </div>
-                ))}
-              </div>
-            )}
+            <PartesLista expedienteId={id} pais={pais} rol={session.rol} partes={partes} />
             <AgregarParteForm expedienteId={id} pais={pais} />
           </div>
         </div>

@@ -119,13 +119,17 @@ CREATE INDEX IF NOT EXISTS idx_partes_cliente ON partes(cliente_id);
 **Archivos**: `migrations/005-fundacion-finanzas.sql`, `src/lib/db.ts` (`resolveDespachoId`), `src/app/api/expedientes/route.ts`, `.../[id]/gastos/route.ts`, `.../[id]/pagos/route.ts`, `src/features/finanzas/components/gastos-panel.tsx`.
 **⚠️ Producción**: aplicar `migrations/005` a Neon al desplegar.
 
-### Fase 2: CRUD Expedientes + Clientes
+### Fase 2: CRUD Expedientes + Clientes ✅ COMPLETADA (2026-07-02)
 **Objetivo**: Editar y eliminar (soft-delete) expedientes y clientes desde la UI, con permisos por rol y tenancy por `despacho_id`.
-**Validación**: Editar y archivar un expediente y un cliente; verificar que un rol sin permiso no puede.
+**Validación**: ✅ end-to-end (curl+BD): admin/abogado editan (200), abogado DELETE → 403, borrado de cliente con expediente → archiva, sin expediente → borrado físico. `tsc` + `build` limpios.
+**Archivos**: `cliente-acciones.tsx`, `expediente-acciones.tsx`, `clientes/[id]/route.ts` (PUT/DELETE), `expedientes/[id]/route.ts` (guards rol).
+**Fix incluido**: tenancy del detalle de expedientes alineada a `despacho_id` (antes solo `user_id` → 404 al colega). Ver aprendizaje.
 
-### Fase 3: Partes — editar + cliente principal + sync inversa
+### Fase 3: Partes — editar + cliente principal + sync inversa ✅ COMPLETADA (2026-07-02)
 **Objetivo**: Editar/eliminar partes, marcar cliente principal, y sincronizar Parte→Cliente (crear/actualizar cliente desde parte).
-**Validación**: Editar una parte; marcar principal en modo manual → aparece cliente en CRM vinculado.
+**Validación**: ✅ end-to-end (curl+BD): editar parte (200), rol sin permiso (403), marcar principal manual → **crea cliente en CRM + vincula `partes.cliente_id` + `expediente.cliente_id`**, desmarcar → desvincula, DELETE (200). GET partes con JOIN funcionando. `tsc` + `build` limpios.
+**Archivos**: `migrations/006-partes-cliente-principal.sql` (drift `cliente_id` + `es_principal` + `updated_at`), `partes/[parteId]/route.ts` (PATCH/DELETE + sync inversa), `partes-lista.tsx`, `partes/route.ts` (scoping despacho).
+**⚠️ Producción**: aplicar `migrations/006` a Neon al desplegar.
 
 ### Fase 4: Dosificación por materia
 **Objetivo**: El selector de delitos solo muestra opciones coherentes con la materia/país del expediente; materias no penales no ofrecen delitos penales.
@@ -159,6 +163,16 @@ CREATE INDEX IF NOT EXISTS idx_partes_cliente ON partes(cliente_id);
 - **Error**: `npm run typecheck` → "Missing script". package.json solo tiene dev/build/start/lint.
 - **Fix**: Usar `npx tsc --noEmit` directamente.
 - **Aplicar en**: Este proyecto (Verioska Legal).
+
+### 2026-07-02: Fase 2 — Tenancy inconsistente (detalle por user_id, listado por despacho)
+- **Error**: El listado de expedientes filtra por `user_id OR despacho_id`, pero el detalle (GET/PUT/DELETE de `[id]` y el server `page.tsx`) filtraba solo por `user_id`. Un colega del mismo despacho veía el expediente en la lista pero recibía 404 al abrirlo/editarlo → las acciones CRUD por rol quedaban inservibles para admin sobre expedientes ajenos.
+- **Fix**: Mismo predicado en listado y detalle: `WHERE id=$1 AND (user_id=$2 OR despacho_id=(SELECT despacho_id FROM users WHERE id=$2))`. Aplicado en `verifyOwnership` (expedientes y partes), GET detalle API y `page.tsx`. Clientes ya lo hacía bien.
+- **Aplicar en**: Toda entidad multi-tenant — el scoping del detalle DEBE coincidir con el del listado.
+
+### 2026-07-02: Fase 3 — `partes.cliente_id` era schema drift (rompía el GET local)
+- **Error**: `partes/route.ts` GET hace `LEFT JOIN clientes ON p.cliente_id` y POST lo inserta, pero la columna no existía en migraciones → en la BD local el GET de partes fallaba.
+- **Fix**: `migrations/006` formaliza `cliente_id` + añade `es_principal` y `updated_at` (IF NOT EXISTS). Sync inversa: al marcar una parte manual como principal se crea el cliente en CRM (`fuente='directorio'`), se vincula `partes.cliente_id` y `expediente.cliente_id`; se garantiza un único principal por expediente.
+- **Aplicar en**: Formalizar SIEMPRE columnas usadas en código con migración `IF NOT EXISTS`; no confiar en el drift de Neon para la BD local.
 
 ### 2026-07-02: BD local de dev = Docker `verioska-db`
 - **Nota**: dev usa Postgres local en Docker (`localhost:5432/verioska`, user `verioska`, pass `verioska_dev_2026`), separado de la Neon de producción. El contenedor `verioska-db` debe estar corriendo (arrancar Docker Desktop). Producción (Neon) requiere aplicar la migración 005 por separado al desplegar.

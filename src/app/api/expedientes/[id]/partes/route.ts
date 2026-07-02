@@ -3,9 +3,12 @@ import { z } from 'zod'
 import { query, queryOne } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 
+// Scoping por despacho (PRP-005), coherente con el listado y el detalle.
 async function verifyOwnership(expedienteId: string, userId: string) {
   return queryOne<{ id: string }>(
-    'SELECT id FROM expedientes WHERE id = $1 AND user_id = $2',
+    `SELECT id FROM expedientes
+      WHERE id = $1
+        AND (user_id = $2 OR despacho_id = (SELECT despacho_id FROM users WHERE id = $2))`,
     [expedienteId, userId]
   )
 }
