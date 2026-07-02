@@ -53,6 +53,8 @@ export default function DosificacionPanel({ expedienteId, pais = 'MX' }: { exped
   const [resultado, setResultado] = useState<Resultado | null>(null)
   const [loading, setLoading] = useState(false)
   const [loadingCatalogo, setLoadingCatalogo] = useState(true)
+  const [aplica, setAplica] = useState(true)
+  const [materia, setMateria] = useState<string>('penal')
 
   useEffect(() => {
     cargarCatalogo()
@@ -64,6 +66,8 @@ export default function DosificacionPanel({ expedienteId, pais = 'MX' }: { exped
       const json = await res.json()
       setDelitos(json.data?.delitos || [])
       setFactores(json.data?.factores || { agravantes: [], atenuantes: [] })
+      setAplica(json.data?.aplica ?? true)
+      setMateria(json.data?.materia || 'penal')
     } catch {
       console.error('Error cargando catálogo')
     } finally {
@@ -119,6 +123,17 @@ export default function DosificacionPanel({ expedienteId, pais = 'MX' }: { exped
         </span>
       </div>
 
+      {/* Aviso: la dosificación penal no aplica a materias no penales */}
+      {!aplica ? (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" />
+          <p className="text-sm text-amber-800">
+            La dosificación de pena aplica solo a expedientes de <strong>materia penal</strong>.
+            Este expediente es de materia <strong className="capitalize">{materia}</strong>, por lo que no se ofrece el catálogo de delitos penales.
+          </p>
+        </div>
+      ) : (
+      <>
       {/* Selector de delito */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">Delito</label>
@@ -290,6 +305,8 @@ export default function DosificacionPanel({ expedienteId, pais = 'MX' }: { exped
             Fundamento: {resultado.fundamentoLegal}. Esta es una estimación orientativa, no sustituye el análisis judicial.
           </p>
         </div>
+      )}
+      </>
       )}
     </div>
   )

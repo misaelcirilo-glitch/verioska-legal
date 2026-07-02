@@ -11,8 +11,8 @@ import {
 } from '@/features/dosificacion/services/calculador-penas'
 
 async function verifyOwnership(expedienteId: string, userId: string) {
-  return queryOne<{ id: string; pais: string | null; delito: string | null }>(
-    `SELECT e.id, e.pais, e.delito FROM expedientes e
+  return queryOne<{ id: string; pais: string | null; delito: string | null; materia: string | null }>(
+    `SELECT e.id, e.pais, e.delito, e.materia FROM expedientes e
      WHERE e.id = $1
        AND (e.user_id = $2
             OR e.despacho_id = (SELECT despacho_id FROM users WHERE id = $2))`,
@@ -42,9 +42,11 @@ export async function GET(
     const pais = (expediente.pais || 'MX') as 'MX' | 'PE'
 
     if (catalogo) {
-      const delitos = buscarDelitos(pais)
+      const materia = expediente.materia || 'penal'
+      const aplica = materia === 'penal'
+      const delitos = buscarDelitos(pais, undefined, materia)
       const factores = obtenerFactores(pais)
-      return NextResponse.json({ data: { delitos, factores } })
+      return NextResponse.json({ data: { delitos, factores, materia, aplica } })
     }
 
     const dosificaciones = await query(
@@ -86,8 +88,15 @@ export async function POST(
     const parsed = dosificacionSchema.parse(body)
     const pais = (expediente.pais || 'MX') as 'MX' | 'PE'
 
-    // Buscar delito en catálogo
-    const delitos = buscarDelitos(pais, parsed.delitoNombre)
+    // Buscar delito en catálogo (filtrado por materia del expediente)
+    const materia = expediente.materia || 'penal'
+    if (materia !== 'penal') {
+      return NextResponse.json(
+        { error: `La dosificación de pena aplica solo a materia penal (este expediente es de materia ${materia}).` },
+        { status: 400 }
+      )
+    }
+    const delitos = buscarDelitos(pais, parsed.delitoNombre, materia)
     if (delitos.length === 0) {
       return NextResponse.json({ error: 'Delito no encontrado en catálogo' }, { status: 400 })
     }

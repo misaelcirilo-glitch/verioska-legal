@@ -5,6 +5,7 @@
 
 export interface RangoPena {
   delito: string
+  materia?: string   // 'penal' por defecto; el catálogo actual es 100% penal
   pais: 'MX' | 'PE'
   codigoPenal: string
   articulo: string
@@ -293,8 +294,12 @@ export const ATENUANTES_PE: FactorDosificacion[] = [
 
 const TODOS_DELITOS = [...DELITOS_MX, ...DELITOS_PE]
 
-export function buscarDelitos(pais: 'MX' | 'PE', consulta?: string): RangoPena[] {
-  let delitos = TODOS_DELITOS.filter(d => d.pais === pais)
+// materia: filtra el catálogo por materia del expediente. El catálogo es 100%
+// penal (materia ?? 'penal'); una materia distinta a penal devuelve [] para que
+// el panel no ofrezca delitos penales fuera de contexto (PRP-005 Fase 4).
+export function buscarDelitos(pais: 'MX' | 'PE', consulta?: string, materia?: string): RangoPena[] {
+  const materiaObjetivo = materia || 'penal'
+  let delitos = TODOS_DELITOS.filter(d => d.pais === pais && (d.materia ?? 'penal') === materiaObjetivo)
   if (consulta) {
     const q = consulta.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     delitos = delitos.filter(d =>

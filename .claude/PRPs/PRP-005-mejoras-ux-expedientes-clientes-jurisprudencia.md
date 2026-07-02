@@ -131,9 +131,11 @@ CREATE INDEX IF NOT EXISTS idx_partes_cliente ON partes(cliente_id);
 **Archivos**: `migrations/006-partes-cliente-principal.sql` (drift `cliente_id` + `es_principal` + `updated_at`), `partes/[parteId]/route.ts` (PATCH/DELETE + sync inversa), `partes-lista.tsx`, `partes/route.ts` (scoping despacho).
 **⚠️ Producción**: aplicar `migrations/006` a Neon al desplegar.
 
-### Fase 4: Dosificación por materia
+### Fase 4: Dosificación por materia ✅ COMPLETADA (2026-07-02)
 **Objetivo**: El selector de delitos solo muestra opciones coherentes con la materia/país del expediente; materias no penales no ofrecen delitos penales.
-**Validación**: Expediente penal MX muestra delitos MX; expediente laboral no muestra delitos penales.
+**Validación**: ✅ (curl+BD): materia penal MX → 12 delitos, `aplica:true`; materia civil → 0 delitos, `aplica:false`, POST calcular → 400; materia NULL → default penal. `tsc` + `build` limpios.
+**Archivos**: `calculador-penas.ts` (`materia?` en `RangoPena` + filtro en `buscarDelitos`), `dosificacion/route.ts` (trae `materia`, devuelve `aplica`, bloquea POST no penal), `dosificacion-panel.tsx` (aviso cuando no aplica).
+**Nota**: catálogo actual es 100% penal; `materia ?? 'penal'`. Ampliar a otras materias es dato nuevo, fuera de este PRP.
 
 ### Fase 5: Escritos — plantilla propia / predefinida / IA
 **Objetivo**: Generar escritos desde plantilla del despacho (con sustitución `{{campo}}`), desde predefinidas (semilla editable) o con IA (fallback sin key), con campos editables.
