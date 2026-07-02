@@ -137,9 +137,11 @@ CREATE INDEX IF NOT EXISTS idx_partes_cliente ON partes(cliente_id);
 **Archivos**: `calculador-penas.ts` (`materia?` en `RangoPena` + filtro en `buscarDelitos`), `dosificacion/route.ts` (trae `materia`, devuelve `aplica`, bloquea POST no penal), `dosificacion-panel.tsx` (aviso cuando no aplica).
 **Nota**: catálogo actual es 100% penal; `materia ?? 'penal'`. Ampliar a otras materias es dato nuevo, fuera de este PRP.
 
-### Fase 5: Escritos — plantilla propia / predefinida / IA
-**Objetivo**: Generar escritos desde plantilla del despacho (con sustitución `{{campo}}`), desde predefinidas (semilla editable) o con IA (fallback sin key), con campos editables.
-**Validación**: Generar un escrito por cada uno de los 3 modos en un expediente real.
+### Fase 5: Escritos — plantilla propia / predefinida ✅ COMPLETADA (2026-07-02) · IA diferida
+**Objetivo**: Generar escritos desde plantilla del despacho (con sustitución `{{campo}}`) o desde predefinidas.
+**Decisión (usuario)**: el modo **IA queda fuera de esta fase** (no hay `OPENROUTER_API_KEY`); se hará como fase aparte cuando exista la key. Se implementaron 2 modos.
+**Validación**: ✅ (curl+BD): predefinida → 201; predefinida sin tipo → 400; plantilla propia sustituye `{{campo}}` (incluye espacios `{{ juzgado }}`, marca desconocidos como `[CAMPO]`), guarda `origen`/`plantilla_id`; GET incluye plantillas del despacho. `tsc`+`build` OK.
+**Archivos**: `migrations/007-escritos-plantillas.sql` (`plantilla_id`, `origen`, `campos`), `generador-escritos.ts` (`construirVariables` + `sustituirPlantilla`), `escritos/route.ts` (2 modos + scoping despacho + plantillas en GET), `escritos-panel.tsx` (selector de modo).
 
 ### Fase 6: Jurisprudencia — múltiples resultados + detalle
 **Objetivo**: Las búsquedas por tema devuelven todos los resultados relevantes; el detalle abre en nueva pestaña con el texto íntegro.
@@ -175,6 +177,11 @@ CREATE INDEX IF NOT EXISTS idx_partes_cliente ON partes(cliente_id);
 - **Error**: `partes/route.ts` GET hace `LEFT JOIN clientes ON p.cliente_id` y POST lo inserta, pero la columna no existía en migraciones → en la BD local el GET de partes fallaba.
 - **Fix**: `migrations/006` formaliza `cliente_id` + añade `es_principal` y `updated_at` (IF NOT EXISTS). Sync inversa: al marcar una parte manual como principal se crea el cliente en CRM (`fuente='directorio'`), se vincula `partes.cliente_id` y `expediente.cliente_id`; se garantiza un único principal por expediente.
 - **Aplicar en**: Formalizar SIEMPRE columnas usadas en código con migración `IF NOT EXISTS`; no confiar en el drift de Neon para la BD local.
+
+### 2026-07-02: Fase 5 — Migraciones 004 y 006 nunca aplicadas a la BD local
+- **Error**: `plantillas_despacho` (mig. 004) no existía en la BD local → el CRUD de Configuración/Plantillas y el modo "plantilla propia" de escritos fallaban (500). Igual pasó con las columnas de `partes` (mig. 006). La BD local iba atrasada respecto a las migraciones del repo.
+- **Fix**: Aplicar las migraciones pendientes con `docker exec -i verioska-db psql ... < migrations/00X.sql` (idempotentes). No hay tabla de tracking de migraciones → verificar con `SELECT tablename FROM pg_tables` / `information_schema.columns` antes de asumir que una columna/tabla existe.
+- **Aplicar en**: Antes de tocar una feature, confirmar que su tabla/columna existe en la BD local; no confiar en que el drift de Neon esté replicado local.
 
 ### 2026-07-02: BD local de dev = Docker `verioska-db`
 - **Nota**: dev usa Postgres local en Docker (`localhost:5432/verioska`, user `verioska`, pass `verioska_dev_2026`), separado de la Neon de producción. El contenedor `verioska-db` debe estar corriendo (arrancar Docker Desktop). Producción (Neon) requiere aplicar la migración 005 por separado al desplegar.

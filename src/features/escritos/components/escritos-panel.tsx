@@ -19,6 +19,12 @@ interface TipoEscrito {
   label: string
 }
 
+interface Plantilla {
+  id: string
+  nombre: string
+  categoria: string
+}
+
 interface Props {
   expedienteId: string
 }
@@ -26,10 +32,13 @@ interface Props {
 export function EscritosPanel({ expedienteId }: Props) {
   const [escritos, setEscritos] = useState<Escrito[]>([])
   const [tipos, setTipos] = useState<TipoEscrito[]>([])
+  const [plantillas, setPlantillas] = useState<Plantilla[]>([])
+  const [modo, setModo] = useState<'predefinida' | 'plantilla_propia'>('predefinida')
   const [loading, setLoading] = useState(true)
   const [generando, setGenerando] = useState(false)
   const [error, setError] = useState('')
   const [selectedTipo, setSelectedTipo] = useState('')
+  const [selectedPlantilla, setSelectedPlantilla] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const router = useRouter()
@@ -39,10 +48,12 @@ export function EscritosPanel({ expedienteId }: Props) {
       try {
         const res = await fetch(`/api/expedientes/${expedienteId}/escritos`)
         if (!res.ok) throw new Error('Error al cargar')
-        const { data, tiposDisponibles } = await res.json()
+        const { data, tiposDisponibles, plantillas: plt } = await res.json()
         setEscritos(data)
         setTipos(tiposDisponibles)
+        setPlantillas(plt || [])
         if (tiposDisponibles.length > 0) setSelectedTipo(tiposDisponibles[0].value)
+        if (plt && plt.length > 0) setSelectedPlantilla(plt[0].id)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error')
       } finally {
@@ -53,14 +64,17 @@ export function EscritosPanel({ expedienteId }: Props) {
   }, [expedienteId])
 
   async function handleGenerar() {
-    if (!selectedTipo) return
+    const body = modo === 'plantilla_propia'
+      ? { origen: 'plantilla_propia', plantillaId: selectedPlantilla }
+      : { origen: 'predefinida', tipoEscrito: selectedTipo }
+    if (modo === 'plantilla_propia' ? !selectedPlantilla : !selectedTipo) return
     setGenerando(true)
     setError('')
     try {
       const res = await fetch(`/api/expedientes/${expedienteId}/escritos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tipoEscrito: selectedTipo }),
+        body: JSON.stringify(body),
       })
       if (!res.ok) {
         const data = await res.json()
@@ -96,22 +110,63 @@ export function EscritosPanel({ expedienteId }: Props) {
 
   return (
     <div>
+      {/* Selector de modo */}
+      <div className="mb-3 flex gap-1 rounded bg-slate-100 p-0.5">
+        <button
+          type="button"
+          onClick={() => setModo('predefinida')}
+          className={`flex-1 rounded px-2 py-1 text-xs font-medium ${modo === 'predefinida' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-600'}`}
+        >
+          Predefinida
+        </button>
+        <button
+          type="button"
+          onClick={() => setModo('plantilla_propia')}
+          className={`flex-1 rounded px-2 py-1 text-xs font-medium ${modo === 'plantilla_propia' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-600'}`}
+        >
+          Plantilla del despacho
+        </button>
+      </div>
+
       <div className="mb-4 flex items-end gap-3">
         <div className="flex-1">
-          <label className="mb-1 block text-xs font-medium text-slate-600">Tipo de escrito</label>
-          <select
-            value={selectedTipo}
-            onChange={e => setSelectedTipo(e.target.value)}
-            className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
-          >
-            {tipos.map(t => (
-              <option key={t.value} value={t.value}>{t.label}</option>
-            ))}
-          </select>
+          {modo === 'predefinida' ? (
+            <>
+              <label className="mb-1 block text-xs font-medium text-slate-600">Tipo de escrito</label>
+              <select
+                value={selectedTipo}
+                onChange={e => setSelectedTipo(e.target.value)}
+                className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+              >
+                {tipos.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </>
+          ) : (
+            <>
+              <label className="mb-1 block text-xs font-medium text-slate-600">Plantilla del despacho</label>
+              {plantillas.length === 0 ? (
+                <p className="rounded border border-dashed border-slate-300 px-2 py-1.5 text-xs text-slate-500">
+                  No hay plantillas. Créalas en Configuración → Plantillas (usa {'{{campo}}'} para los datos del expediente).
+                </p>
+              ) : (
+                <select
+                  value={selectedPlantilla}
+                  onChange={e => setSelectedPlantilla(e.target.value)}
+                  className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                >
+                  {plantillas.map(p => (
+                    <option key={p.id} value={p.id}>{p.nombre}</option>
+                  ))}
+                </select>
+              )}
+            </>
+          )}
         </div>
         <button
           onClick={handleGenerar}
-          disabled={generando || !selectedTipo}
+          disabled={generando || (modo === 'predefinida' ? !selectedTipo : !selectedPlantilla)}
           className="inline-flex items-center gap-1.5 rounded-md bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
         >
           <Plus className="h-4 w-4" />

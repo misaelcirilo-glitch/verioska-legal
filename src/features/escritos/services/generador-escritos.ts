@@ -45,6 +45,44 @@ function fechaActual(): string {
   })
 }
 
+// ============================================
+// Motor de plantillas propias ({{campo}})
+// ============================================
+
+// Construye el diccionario de variables disponibles para sustituir en una
+// plantilla del despacho. Las claves son los nombres de {{campo}} soportados.
+export function construirVariables(datos: DatosExpediente): Record<string, string> {
+  const imputado = formatNombre(datos.imputado)
+  const victima = formatNombre(datos.victima)
+  const defensor = formatNombre(datos.defensor)
+  return {
+    imputado,
+    cliente: imputado, // alias habitual: el cliente principal suele ser el imputado
+    victima,
+    defensor,
+    juzgado: datos.juzgado || '[JUZGADO]',
+    distrito_judicial: datos.distritoJudicial || '[DISTRITO JUDICIAL]',
+    fiscalia: datos.fiscalia || '[FISCALÍA]',
+    nuc: datos.nuc || datos.carpetaInvestigacion || '[NUC/CI]',
+    carpeta_investigacion: datos.carpetaInvestigacion || '[CARPETA DE INVESTIGACIÓN]',
+    causa_penal: datos.causaPenal || '[CAUSA PENAL]',
+    delito: datos.delito || '[DELITO]',
+    etapa_procesal: datos.etapaProcesal || '[ETAPA PROCESAL]',
+    fecha: fechaActual(),
+  }
+}
+
+// Sustituye {{campo}} en el contenido. Insensible a mayúsculas y espacios
+// internos ({{ Cliente }} == {{cliente}}). Los campos desconocidos se dejan
+// marcados como [CAMPO] para que el usuario los complete a mano.
+export function sustituirPlantilla(contenido: string, variables: Record<string, string>): string {
+  return contenido.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_m, campo: string) => {
+    const clave = String(campo).toLowerCase()
+    if (clave in variables) return variables[clave]
+    return `[${String(campo).toUpperCase()}]`
+  })
+}
+
 export function generarEscrito(tipo: string, datos: DatosExpediente): EscritoGenerado {
   const titulo = TIPOS_ESCRITO[tipo as keyof typeof TIPOS_ESCRITO] || tipo
   const imputado = formatNombre(datos.imputado)
