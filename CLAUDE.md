@@ -354,6 +354,11 @@ test('should calculate total with tax', () => {
 - **Fix**: Migrar `middleware.ts` a `proxy.ts` siguiendo docs de Next.js 16
 - **Aplicar en**: Todos los proyectos que actualizan a Next.js 16
 
+### 2026-07-02: Tenancy inconsistente — listado por despacho, detalle por user_id
+- **Error**: `GET /api/expedientes` (listado) filtra por `user_id OR despacho_id`, pero el detalle (`/api/expedientes/[id]` GET/PUT/DELETE y el `page.tsx` server component) filtraba solo por `user_id`. Un colega del mismo despacho veía el expediente en la lista pero recibía **404** al abrirlo/editarlo. Rompía las acciones CRUD por rol (admin no podía editar el expediente de otro).
+- **Fix**: Usar el MISMO predicado en listado y detalle: `WHERE id = $1 AND (user_id = $2 OR despacho_id = (SELECT despacho_id FROM users WHERE id = $2))`. La migración 005 pobló `despacho_id` justo para esto.
+- **Aplicar en**: Toda entidad multi-tenant — el scoping del **detalle** debe coincidir con el del **listado**. Clientes ya lo hacía bien (todo por `despacho_id`).
+
 ---
 
 *Este archivo es el cerebro de la fábrica. Cada error documentado la hace más fuerte.*
