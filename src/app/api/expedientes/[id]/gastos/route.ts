@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { query, queryOne } from '@/lib/db'
+import { query, queryOne, resolveDespachoId } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 
 async function verifyOwnership(expedienteId: string, userId: string) {
@@ -84,13 +84,17 @@ export async function POST(
 
     const d = parsed.data
 
+    // Se guarda el despacho_id cuando puede resolverse (metadato); si el layer
+    // de despachos no está poblado queda NULL (columna nullable desde mig. 005).
+    const despachoId = expediente.despacho_id ?? session.despachoId ?? (await resolveDespachoId(session.userId))
+
     const gasto = await queryOne(
       `INSERT INTO gastos (
         despacho_id, expediente_id, concepto, categoria,
         monto, moneda, fecha_gasto, comprobante, notas
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
       [
-        expediente.despacho_id, id, d.concepto, d.categoria || null,
+        despachoId, id, d.concepto, d.categoria || null,
         d.monto, d.moneda, d.fechaGasto || new Date().toISOString(),
         d.comprobante || null, d.notas || null,
       ]

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { query, queryOne } from '@/lib/db'
+import { query, queryOne, resolveDespachoId } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 
 const expedienteSchema = z.object({
@@ -75,19 +75,23 @@ export async function POST(request: NextRequest) {
 
     const d = parsed.data
 
+    // despacho_id al crear: evita el bug de finanzas (gastos/pagos exigen
+    // despacho_id NOT NULL). Se resuelve del token o de la BD.
+    const despachoId = session.despachoId || (await resolveDespachoId(session.userId))
+
     const expediente = await queryOne<{ id: string; created_at: string }>(
       `INSERT INTO expedientes (
-        user_id, pais, materia, delito, nuc, carpeta_investigacion, causa_penal,
+        user_id, despacho_id, pais, materia, delito, nuc, carpeta_investigacion, causa_penal,
         numero_carpeta_fiscal, numero_expediente_judicial,
         juzgado, distrito_judicial, fiscalia, etapa_procesal,
         fecha_hechos, fecha_detencion, fecha_puesta_disposicion,
         fecha_formulacion, fecha_vinculacion, fecha_denuncia,
         fecha_formalizacion, fecha_acusacion, fecha_auto_enjuiciamiento,
         complejidad, duplicidad_termino, notas
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
       RETURNING *`,
       [
-        session.userId, d.pais, d.materia || null, d.delito, d.nuc || null, d.carpetaInvestigacion || null,
+        session.userId, despachoId, d.pais, d.materia || null, d.delito, d.nuc || null, d.carpetaInvestigacion || null,
         d.causaPenal || null,
         d.numeroCarpetaFiscal || null, d.numeroExpedienteJudicial || null,
         d.juzgado || null, d.distritoJudicial || null,

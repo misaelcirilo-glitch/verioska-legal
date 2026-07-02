@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { query, queryOne } from '@/lib/db'
+import { query, queryOne, resolveDespachoId } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 
 async function verifyOwnership(expedienteId: string, userId: string) {
@@ -67,10 +67,6 @@ export async function POST(
       return NextResponse.json({ error: 'Expediente no encontrado' }, { status: 404 })
     }
 
-    if (!expediente.cliente_id) {
-      return NextResponse.json({ error: 'Expediente sin cliente asignado' }, { status: 400 })
-    }
-
     const body = await request.json()
     const parsed = pagoSchema.safeParse(body)
     if (!parsed.success) {
@@ -79,6 +75,11 @@ export async function POST(
 
     const d = parsed.data
 
+    // despacho_id como metadato (nullable desde mig. 005); se guarda si se puede.
+    const despachoId = expediente.despacho_id ?? session.despachoId ?? (await resolveDespachoId(session.userId))
+
+    // cliente_id ahora es opcional (migración 005): un pago puede registrarse
+    // aunque el expediente todavía no tenga cliente asignado.
     const pago = await queryOne(
       `INSERT INTO pagos (
         despacho_id, expediente_id, cliente_id,
@@ -87,7 +88,7 @@ export async function POST(
         comprobante, notas
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
       [
-        expediente.despacho_id, id, expediente.cliente_id,
+        despachoId, id, expediente.cliente_id ?? null,
         d.monto, d.moneda, d.concepto, d.etapaProcesal || null,
         d.metodoPago || null, d.estado,
         d.fechaVencimiento || null, d.fechaPago || null,

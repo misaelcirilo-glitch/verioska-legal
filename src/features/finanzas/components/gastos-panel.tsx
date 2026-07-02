@@ -28,6 +28,7 @@ export function GastosPanel({ expedienteId, moneda = 'MXN' }: { expedienteId: st
   const [total, setTotal] = useState(0)
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const simbolo = moneda === 'PEN' ? 'S/' : '$'
 
@@ -44,31 +45,41 @@ export function GastosPanel({ expedienteId, moneda = 'MXN' }: { expedienteId: st
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
+    setError('')
 
     const fd = new FormData(e.currentTarget)
 
-    const res = await fetch(`/api/expedientes/${expedienteId}/gastos`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        concepto: fd.get('concepto'),
-        categoria: fd.get('categoria') || undefined,
-        monto: parseFloat(fd.get('monto') as string),
-        moneda,
-        fechaGasto: fd.get('fechaGasto') || undefined,
-        notas: fd.get('notas') || undefined,
-      }),
-    })
+    try {
+      const res = await fetch(`/api/expedientes/${expedienteId}/gastos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          concepto: fd.get('concepto'),
+          categoria: fd.get('categoria') || undefined,
+          monto: parseFloat(fd.get('monto') as string),
+          moneda,
+          fechaGasto: fd.get('fechaGasto') || undefined,
+          notas: fd.get('notas') || undefined,
+        }),
+      })
 
-    if (res.ok) {
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        setError(err.error || 'No se pudo registrar el gasto')
+        return
+      }
+
       setShowForm(false)
       router.refresh()
       // Re-fetch gastos
       const d = await (await fetch(`/api/expedientes/${expedienteId}/gastos`)).json()
       setGastos(d.data || [])
       setTotal(d.totales?.total || 0)
+    } catch {
+      setError('Error de conexión al registrar el gasto')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const categoriaLabel = (cat: string | null) =>
@@ -125,6 +136,7 @@ export function GastosPanel({ expedienteId, moneda = 'MXN' }: { expedienteId: st
           </div>
           <input name="fechaGasto" type="date" className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
           <input name="notas" placeholder="Notas (opcional)" className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+          {error && <p className="rounded bg-red-50 px-2 py-1.5 text-xs text-red-600">{error}</p>}
           <button
             type="submit"
             disabled={loading}
