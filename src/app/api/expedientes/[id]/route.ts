@@ -9,6 +9,9 @@ async function verifyOwnership(expedienteId: string, userId: string) {
   )
 }
 
+// Permisos (PRP-005): editar → admin/abogado; borrado permanente → admin.
+const EDIT_ROLES = ['admin', 'abogado']
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -67,6 +70,10 @@ export async function PUT(
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
 
+    if (!EDIT_ROLES.includes(session.rol)) {
+      return NextResponse.json({ error: 'No tienes permiso para editar expedientes' }, { status: 403 })
+    }
+
     const { id } = await params
     const owns = await verifyOwnership(id, session.userId)
     if (!owns) {
@@ -80,6 +87,7 @@ export async function PUT(
 
     const allowedFields: Record<string, string> = {
       delito: 'delito',
+      materia: 'materia',
       nuc: 'nuc',
       carpetaInvestigacion: 'carpeta_investigacion',
       causaPenal: 'causa_penal',
@@ -133,6 +141,11 @@ export async function DELETE(
     const session = await getSession()
     if (!session) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+    }
+
+    // Borrado permanente: solo admin (decisión PRP-005).
+    if (session.rol !== 'admin') {
+      return NextResponse.json({ error: 'Solo un administrador puede eliminar permanentemente' }, { status: 403 })
     }
 
     const { id } = await params

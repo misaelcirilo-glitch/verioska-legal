@@ -6,6 +6,7 @@ import { ArrowLeft, Clock, Calendar, Users, FolderOpen, MessageSquare, AlertTria
 import { Badge } from '@/shared/components/badge'
 import { SemaforoPlazo } from '@/shared/components/semaforo-plazo'
 import { GenerarPlazosButton } from './generar-plazos-button'
+import { ExpedienteAcciones } from './expediente-acciones'
 import { AgregarParteForm } from './agregar-parte-form'
 import { AgregarAudienciaForm } from './agregar-audiencia-form'
 import { AgregarPlazoForm } from './agregar-plazo-form'
@@ -107,13 +108,29 @@ export default async function ExpedienteDetailPage({
         <Link href="/expedientes" className="mb-2 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700">
           <ArrowLeft className="h-4 w-4" /> Expedientes
         </Link>
-        <div className="flex items-center gap-3">
-          <span className="text-xl">{pais === 'PE' ? '🇵🇪' : '🇲🇽'}</span>
-          <h1 className="text-2xl font-bold text-slate-900">{expediente.delito}</h1>
-          <Badge variant={expediente.estado === 'activo' ? 'success' : 'neutral'}>
-            {expediente.estado}
-          </Badge>
-          <Badge variant="info">{etapaLabels[expediente.etapa_procesal] || expediente.etapa_procesal}</Badge>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="text-xl">{pais === 'PE' ? '🇵🇪' : '🇲🇽'}</span>
+            <h1 className="text-2xl font-bold text-slate-900">{expediente.delito}</h1>
+            <Badge variant={expediente.estado === 'activo' ? 'success' : 'neutral'}>
+              {expediente.estado}
+            </Badge>
+            <Badge variant="info">{etapaLabels[expediente.etapa_procesal] || expediente.etapa_procesal}</Badge>
+          </div>
+          <ExpedienteAcciones
+            expediente={{
+              id: expediente.id,
+              delito: expediente.delito,
+              materia: (expediente as { materia?: string | null }).materia ?? null,
+              juzgado: expediente.juzgado,
+              distrito_judicial: expediente.distrito_judicial,
+              fiscalia: expediente.fiscalia,
+              etapa_procesal: expediente.etapa_procesal,
+              estado: expediente.estado,
+              notas: expediente.notas,
+            }}
+            rol={session.rol}
+          />
         </div>
         <div className="mt-1 flex gap-4 text-sm text-slate-500">
           {expediente.nuc && <span>NUC: {expediente.nuc}</span>}

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { User, Phone, Mail, FolderOpen, DollarSign, ArrowLeft, Loader2, MapPin, IdCard } from 'lucide-react'
+import { ClienteAcciones } from './cliente-acciones'
 
 interface Cliente {
   id: string
@@ -64,7 +65,7 @@ export default function ClienteDetallePage() {
   const [pagos, setPagos] = useState<Pago[]>([])
   const [stats, setStats] = useState<Stats>({ totalFacturado: 0, totalPagado: 0, pendiente: 0 })
 
-  useEffect(() => {
+  function load() {
     if (!id) return
     fetch(`/api/clientes/${id}`)
       .then(r => r.json())
@@ -77,6 +78,11 @@ export default function ClienteDetallePage() {
       })
       .catch(() => setError('Error cargando cliente'))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   if (loading) {
@@ -146,9 +152,27 @@ export default function ClienteDetallePage() {
               </div>
             </div>
           </div>
-          <span className={`rounded-full px-3 py-1 text-sm font-semibold capitalize ${ESTADO_STYLE[cliente.estado] || ESTADO_STYLE.activo}`}>
-            {cliente.estado}
-          </span>
+          <div className="flex flex-col items-end gap-3">
+            <span className={`rounded-full px-3 py-1 text-sm font-semibold capitalize ${ESTADO_STYLE[cliente.estado] || ESTADO_STYLE.activo}`}>
+              {cliente.estado}
+            </span>
+            <ClienteAcciones
+              cliente={{
+                id,
+                nombre: cliente.nombre,
+                apellidos: cliente.apellidos,
+                tipoDocumento: cliente.tipoDocumento,
+                numeroDocumento: cliente.numeroDocumento,
+                telefono: cliente.telefono,
+                email: cliente.email,
+                direccion: cliente.direccion,
+                estado: cliente.estado,
+                fuente: cliente.fuente,
+                notas: cliente.notas,
+              }}
+              onUpdated={load}
+            />
+          </div>
         </div>
       </div>
 
