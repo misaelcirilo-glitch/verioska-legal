@@ -1,6 +1,6 @@
 # PRP-005: Mejoras UX — Expedientes, Clientes y Jurisprudencia
 
-> **Estado**: EN PROGRESO (Fase 1) — aprobado 2026-07-02 con 3 defaults confirmados
+> **Estado**: ✅ COMPLETADO (Fases 1-7) — 2026-07-02. Modo IA de escritos (Fase 5) diferido a fase aparte por decisión del usuario (falta `OPENROUTER_API_KEY`).
 > **Fecha**: 2026-07-02
 > **Proyecto**: Verioska Legal (saas-abogados-mexico)
 > **Stack**: Next.js 16 + React 19 + Neon PostgreSQL (`pg`) + JWT custom (jose) + Zod. Multi-tenant `despacho_id`, multi-país MX/PE. (Legacy — NO Supabase.)
@@ -149,12 +149,13 @@ CREATE INDEX IF NOT EXISTS idx_partes_cliente ON partes(cliente_id);
 **Archivos**: `catalogo-jurisprudencia.ts` (filtro tema OR tag/texto + umbral `_score` 0.3→0.2), `jurisprudencia-panel.tsx` (chip = solo tema, no fuerza consulta; `buscar(override)`; enlace "Ver ficha completa ↗" `target=_blank`), `jurisprudencia/[id]/page.tsx` (ficha con texto íntegro).
 **Nota**: el "texto" es síntesis curada (no la resolución oficial completa), como aclara la ficha.
 
-### Fase 7: Validación Final
+### Fase 7: Validación Final ✅ COMPLETADA (2026-07-02)
 **Validación**:
-- [ ] `npm run typecheck` pasa
-- [ ] `npm run build` exitoso
-- [ ] Playwright confirma cada criterio de éxito
-- [ ] Commit/tag de fase, aprendizajes documentados
+- [x] `npx tsc --noEmit` pasa (no hay script `typecheck`, ver aprendizaje).
+- [x] `npm run build` exitoso.
+- [x] Cada criterio verificado end-to-end vía curl + BD real (Docker `verioska-db`) por rol (admin/abogado/sin permiso). Datos de prueba limpiados tras cada test.
+- [x] Commits por fase + tag `prp-005-complete`, aprendizajes documentados.
+**⚠️ Producción (Neon)**: aplicar `migrations/004, 005, 006, 007` al desplegar (004 y 006 tampoco estaban en la BD local; confirmar estado en Neon).
 
 ---
 
