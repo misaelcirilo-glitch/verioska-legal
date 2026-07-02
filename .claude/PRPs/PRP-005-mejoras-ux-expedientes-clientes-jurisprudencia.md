@@ -143,9 +143,11 @@ CREATE INDEX IF NOT EXISTS idx_partes_cliente ON partes(cliente_id);
 **Validación**: ✅ (curl+BD): predefinida → 201; predefinida sin tipo → 400; plantilla propia sustituye `{{campo}}` (incluye espacios `{{ juzgado }}`, marca desconocidos como `[CAMPO]`), guarda `origen`/`plantilla_id`; GET incluye plantillas del despacho. `tsc`+`build` OK.
 **Archivos**: `migrations/007-escritos-plantillas.sql` (`plantilla_id`, `origen`, `campos`), `generador-escritos.ts` (`construirVariables` + `sustituirPlantilla`), `escritos/route.ts` (2 modos + scoping despacho + plantillas en GET), `escritos-panel.tsx` (selector de modo).
 
-### Fase 6: Jurisprudencia — múltiples resultados + detalle
+### Fase 6: Jurisprudencia — múltiples resultados + detalle ✅ COMPLETADA (2026-07-02)
 **Objetivo**: Las búsquedas por tema devuelven todos los resultados relevantes; el detalle abre en nueva pestaña con el texto íntegro.
-**Validación**: Un tema con ≥2 tesis muestra todas; clic en resultado abre `/jurisprudencia/[id]` en nueva pestaña.
+**Validación**: ✅ (curl+BD): tema 'prueba ilícita' 1→9, 'prisión preventiva' PE 1→3, otros en 2; `/jurisprudencia/mx-001` → 200, id inexistente → 404. `tsc`+`build` OK.
+**Archivos**: `catalogo-jurisprudencia.ts` (filtro tema OR tag/texto + umbral `_score` 0.3→0.2), `jurisprudencia-panel.tsx` (chip = solo tema, no fuerza consulta; `buscar(override)`; enlace "Ver ficha completa ↗" `target=_blank`), `jurisprudencia/[id]/page.tsx` (ficha con texto íntegro).
+**Nota**: el "texto" es síntesis curada (no la resolución oficial completa), como aclara la ficha.
 
 ### Fase 7: Validación Final
 **Validación**:

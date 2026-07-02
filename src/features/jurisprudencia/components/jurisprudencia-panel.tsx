@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Search, BookOpen, Scale, Filter, Bookmark, BookmarkCheck, X } from 'lucide-react'
+import { Search, BookOpen, Scale, Filter, Bookmark, BookmarkCheck, X, ExternalLink } from 'lucide-react'
+import Link from 'next/link'
 
 interface Jurisprudencia {
   id: string
@@ -41,13 +42,17 @@ export default function JurisprudenciaPanel({ pais = 'MX' }: { pais?: string }) 
 
   useEffect(() => { cargarGuardadas() }, [cargarGuardadas])
 
-  const buscar = async () => {
+  const buscar = async (override?: { consulta?: string; tema?: string }) => {
     setLoading(true)
     try {
+      // Permite forzar valores (p. ej. desde un chip de tema) evitando el
+      // estado obsoleto de React al encadenar setState + búsqueda.
+      const q = override?.consulta !== undefined ? override.consulta : consulta
+      const t = override?.tema !== undefined ? override.tema : tema
       const params = new URLSearchParams()
-      if (consulta) params.set('q', consulta)
+      if (q) params.set('q', q)
       if (pais) params.set('pais', pais)
-      if (tema) params.set('tema', tema)
+      if (t) params.set('tema', t)
 
       const res = await fetch(`/api/jurisprudencia?${params}`)
       const json = await res.json()
@@ -140,7 +145,7 @@ export default function JurisprudenciaPanel({ pais = 'MX' }: { pais?: string }) 
               <Filter size={16} />
             </button>
             <button
-              onClick={buscar}
+              onClick={() => buscar()}
               disabled={loading}
               className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50"
             >
@@ -188,7 +193,12 @@ export default function JurisprudenciaPanel({ pais = 'MX' }: { pais?: string }) 
             {TEMAS_COMUNES.map(t => (
               <button
                 key={t}
-                onClick={() => { setTema(t === tema ? '' : t); setConsulta(t); }}
+                onClick={() => {
+                  const nextTema = t === tema ? '' : t
+                  setTema(nextTema)
+                  setConsulta('')            // el chip filtra por TEMA, no por texto (evita el AND que dejaba 1 resultado)
+                  buscar({ tema: nextTema, consulta: '' })
+                }}
                 className={`px-2 py-0.5 rounded-full text-xs border ${
                   tema === t
                     ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
@@ -255,8 +265,16 @@ export default function JurisprudenciaPanel({ pais = 'MX' }: { pais?: string }) 
                         </span>
                       ))}
                     </div>
-                    <div className="mt-2 text-xs text-gray-400">
-                      {j.epoca} | Publicado: {j.fechaPublicacion}
+                    <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
+                      <span>{j.epoca} | Publicado: {j.fechaPublicacion}</span>
+                      <Link
+                        href={`/jurisprudencia/${j.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 font-medium text-indigo-600 hover:text-indigo-800"
+                      >
+                        Ver ficha completa <ExternalLink className="h-3 w-3" />
+                      </Link>
                     </div>
                   </div>
                 )}
@@ -264,7 +282,7 @@ export default function JurisprudenciaPanel({ pais = 'MX' }: { pais?: string }) 
             )
           })}
         </div>
-      ) : !loading && consulta && vista === 'busqueda' ? (
+      ) : !loading && (consulta || tema) && vista === 'busqueda' ? (
         <p className="text-sm text-gray-500 text-center py-4">
           No se encontró jurisprudencia. Intenta con otros términos.
         </p>

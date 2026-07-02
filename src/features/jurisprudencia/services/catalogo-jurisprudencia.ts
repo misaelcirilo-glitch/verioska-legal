@@ -722,12 +722,21 @@ export function buscarJurisprudencia(params: {
     resultados = resultados.filter(j => j.etapasAplicables.includes(params.etapa!))
   }
 
-  // Filtrar por tema
+  // Filtrar por tema (OR, no AND): devuelve las tesis etiquetadas con ese tema
+  // O que lo mencionan en rubro/texto. Antes era solo coincidencia exacta de
+  // tag, lo que —combinado con el filtro de texto que forzaba el chip— dejaba
+  // casi siempre 1 resultado (PRP-005 Fase 6).
   if (params.tema) {
     const temaNorm = normalizarTexto(params.tema)
-    resultados = resultados.filter(j =>
-      j.temas.some(t => normalizarTexto(t).includes(temaNorm))
-    )
+    const palabras = temaNorm.split(' ').filter(p => p.length > 2)
+    resultados = resultados.filter(j => {
+      const porTag = j.temas.some(t => normalizarTexto(t).includes(temaNorm))
+      if (porTag) return true
+      if (palabras.length === 0) return false
+      const textoCompleto = normalizarTexto(`${j.rubro} ${j.texto} ${j.temas.join(' ')}`)
+      const hits = palabras.filter(p => textoCompleto.includes(p)).length
+      return hits / palabras.length >= 0.5
+    })
   }
 
   // Filtrar por delito
@@ -749,7 +758,7 @@ export function buscarJurisprudencia(params: {
           const coincidencias = palabras.filter(p => textoCompleto.includes(p)).length
           return { ...j, _score: coincidencias / palabras.length }
         })
-        .filter(j => (j as { _score: number })._score > 0.3)
+        .filter(j => (j as { _score: number })._score >= 0.2)
         .sort((a, b) => (b as { _score: number })._score - (a as { _score: number })._score)
     }
   }
