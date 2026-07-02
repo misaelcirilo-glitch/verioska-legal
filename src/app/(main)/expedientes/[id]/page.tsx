@@ -61,7 +61,10 @@ export default async function ExpedienteDetailPage({
     notas: string | null
     created_at: string
   }>(
-    'SELECT * FROM expedientes WHERE id = $1 AND user_id = $2',
+    // Scoping por despacho (PRP-005): coherente con el listado y con la API.
+    `SELECT * FROM expedientes
+      WHERE id = $1
+        AND (user_id = $2 OR despacho_id = (SELECT despacho_id FROM users WHERE id = $2))`,
     [id, session.userId]
   )
 

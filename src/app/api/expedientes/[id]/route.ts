@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { query, queryOne } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 
+// Scoping por despacho (PRP-005): el detalle debe ser accesible a todo el
+// despacho, igual que el listado (que ya usa user_id OR despacho_id). Antes
+// filtraba solo por user_id -> un colega veía el expediente en la lista pero
+// obtenia 404 al abrirlo/editarlo. La migración 005 pobló despacho_id para esto.
 async function verifyOwnership(expedienteId: string, userId: string) {
   return queryOne<{ id: string }>(
-    'SELECT id FROM expedientes WHERE id = $1 AND user_id = $2',
+    `SELECT id FROM expedientes
+      WHERE id = $1
+        AND (user_id = $2 OR despacho_id = (SELECT despacho_id FROM users WHERE id = $2))`,
     [expedienteId, userId]
   )
 }
@@ -25,7 +31,9 @@ export async function GET(
     const { id } = await params
 
     const expediente = await queryOne(
-      'SELECT * FROM expedientes WHERE id = $1 AND user_id = $2',
+      `SELECT * FROM expedientes
+        WHERE id = $1
+          AND (user_id = $2 OR despacho_id = (SELECT despacho_id FROM users WHERE id = $2))`,
       [id, session.userId]
     )
 
