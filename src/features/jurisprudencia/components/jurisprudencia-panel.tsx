@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Search, BookOpen, Scale, Filter, Bookmark, BookmarkCheck, X, ExternalLink } from 'lucide-react'
+import { Search, BookOpen, Scale, Filter, Bookmark, BookmarkCheck, X, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react'
 import Link from 'next/link'
 
 interface Jurisprudencia {
@@ -69,6 +69,16 @@ export default function JurisprudenciaPanel({ pais = 'MX' }: { pais?: string }) 
       setLoading(false)
     }
   }
+
+  // Carga inicial (y al cambiar de país): muestra el catálogo completo del país
+  // ordenado por relevancia, en lugar de una pantalla vacía a la espera de una
+  // búsqueda. Así el abogado siempre ve múltiples resultados de entrada.
+  useEffect(() => {
+    setConsulta('')
+    setTema('')
+    buscar({ consulta: '', tema: '' })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pais])
 
   const toggleGuardar = async (j: Jurisprudencia) => {
     if (guardadasIds.has(j.id)) {
@@ -213,75 +223,98 @@ export default function JurisprudenciaPanel({ pais = 'MX' }: { pais?: string }) 
       )}
 
       {lista.length > 0 ? (
-        <div className="space-y-3 max-h-[600px] overflow-y-auto">
-          {lista.map(j => {
-            const guardada = guardadasIds.has(j.id)
-            return (
-              <div
-                key={j.id}
-                className="border border-gray-200 rounded-lg p-4 hover:border-indigo-200 transition-colors"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <Scale className="w-4 h-4 text-indigo-500 shrink-0" />
-                      <span className="text-xs font-medium text-indigo-600">{j.numeroTesis}</span>
-                      <span className="text-xs text-gray-400">|</span>
-                      <span className="text-xs text-gray-500">{j.organo}</span>
-                      {j.relevancia === 'alta' && (
-                        <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold uppercase">Relevante</span>
-                      )}
-                    </div>
-                    <h4
-                      className="text-sm font-medium text-gray-900 cursor-pointer hover:text-indigo-600"
-                      onClick={() => setExpandido(expandido === j.id ? null : j.id)}
-                    >
-                      {j.rubro}
-                    </h4>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={() => toggleGuardar(j)}
-                      className={`p-1.5 rounded hover:bg-gray-100 ${guardada ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-600'}`}
-                      title={guardada ? 'Quitar de guardadas' : 'Guardar'}
-                    >
-                      {guardada ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
-                    </button>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      j.pais === 'PE' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'
-                    }`}>
-                      {j.pais === 'PE' ? 'PE' : 'MX'}
-                    </span>
-                  </div>
-                </div>
-
-                {expandido === j.id && (
-                  <div className="mt-3 pt-3 border-t border-gray-100">
-                    <p className="text-sm text-gray-700 leading-relaxed">{j.texto}</p>
-                    <div className="mt-2 flex flex-wrap gap-1">
-                      {j.temas.map(t => (
-                        <span key={t} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
-                      <span>{j.epoca} | Publicado: {j.fechaPublicacion}</span>
+        <>
+          <div className="mb-2 flex items-center justify-between text-xs text-gray-400">
+            <span>
+              {lista.length} {lista.length === 1 ? 'resultado' : 'resultados'}
+              {vista === 'busqueda' && (consulta || tema) ? ' · más relevantes primero' : ''}
+            </span>
+          </div>
+          <div className="space-y-3 max-h-[600px] overflow-y-auto">
+            {lista.map(j => {
+              const guardada = guardadasIds.has(j.id)
+              const abierto = expandido === j.id
+              return (
+                <div
+                  key={j.id}
+                  className="border border-gray-200 rounded-lg p-4 hover:border-indigo-200 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <Scale className="w-4 h-4 text-indigo-500 shrink-0" />
+                        <span className="text-xs font-medium text-indigo-600">{j.numeroTesis}</span>
+                        <span className="text-xs text-gray-400">|</span>
+                        <span className="text-xs text-gray-500">{j.organo}</span>
+                        {j.relevancia === 'alta' && (
+                          <span className="text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold uppercase">Relevante</span>
+                        )}
+                      </div>
+                      {/* Al seleccionar el resultado se abre la resolución íntegra en
+                          una pestaña nueva, sin perder el estado de la búsqueda. */}
                       <Link
                         href={`/jurisprudencia/${j.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 font-medium text-indigo-600 hover:text-indigo-800"
+                        className="group inline-flex items-start gap-1 text-sm font-medium text-gray-900 hover:text-indigo-600"
+                        title="Abrir texto íntegro en una pestaña nueva"
                       >
-                        Ver ficha completa <ExternalLink className="h-3 w-3" />
+                        <span>{j.rubro}</span>
+                        <ExternalLink className="mt-0.5 h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
                       </Link>
                     </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => setExpandido(abierto ? null : j.id)}
+                        className="p-1.5 rounded text-gray-400 hover:bg-gray-100 hover:text-indigo-600"
+                        title={abierto ? 'Ocultar vista previa' : 'Vista previa'}
+                        aria-expanded={abierto}
+                      >
+                        {abierto ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      </button>
+                      <button
+                        onClick={() => toggleGuardar(j)}
+                        className={`p-1.5 rounded hover:bg-gray-100 ${guardada ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-600'}`}
+                        title={guardada ? 'Quitar de guardadas' : 'Guardar'}
+                      >
+                        {guardada ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
+                      </button>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        j.pais === 'PE' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'
+                      }`}>
+                        {j.pais === 'PE' ? 'PE' : 'MX'}
+                      </span>
+                    </div>
                   </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
+
+                  {abierto && (
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <p className="text-sm text-gray-700 leading-relaxed">{j.texto}</p>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {j.temas.map(t => (
+                          <span key={t} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
+                        <span>{j.epoca} | Publicado: {j.fechaPublicacion}</span>
+                        <Link
+                          href={`/jurisprudencia/${j.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-medium text-indigo-600 hover:text-indigo-800"
+                        >
+                          Abrir resolución completa <ExternalLink className="h-3 w-3" />
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </>
       ) : !loading && (consulta || tema) && vista === 'busqueda' ? (
         <p className="text-sm text-gray-500 text-center py-4">
           No se encontró jurisprudencia. Intenta con otros términos.

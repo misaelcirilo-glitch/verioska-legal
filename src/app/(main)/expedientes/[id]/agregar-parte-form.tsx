@@ -22,6 +22,7 @@ export function AgregarParteForm({ expedienteId, pais = 'MX' }: { expedienteId: 
   const [busqueda, setBusqueda] = useState('')
   const [clienteSeleccionado, setClienteSeleccionado] = useState<Cliente | null>(null)
   const [tipo, setTipo] = useState('')
+  const [esPrincipal, setEsPrincipal] = useState(false)
 
   const tiposParte = pais === 'PE' ? TIPOS_PARTE_PE : TIPOS_PARTE_MX
 
@@ -58,6 +59,7 @@ export function AgregarParteForm({ expedienteId, pais = 'MX' }: { expedienteId: 
         apellidos: clienteSeleccionado.apellidos || undefined,
         clienteId: clienteSeleccionado.id,
         notas: form.get('notas') || undefined,
+        esPrincipal,
       }
     } else {
       body = {
@@ -65,6 +67,7 @@ export function AgregarParteForm({ expedienteId, pais = 'MX' }: { expedienteId: 
         nombre: form.get('nombre'),
         apellidos: form.get('apellidos') || undefined,
         notas: form.get('notas') || undefined,
+        esPrincipal,
       }
     }
 
@@ -84,6 +87,7 @@ export function AgregarParteForm({ expedienteId, pais = 'MX' }: { expedienteId: 
     setOpen(false)
     setClienteSeleccionado(null)
     setBusqueda('')
+    setEsPrincipal(false)
     setLoading(false)
     router.refresh()
   }
@@ -186,6 +190,20 @@ export function AgregarParteForm({ expedienteId, pais = 'MX' }: { expedienteId: 
       )}
 
       <input name="notas" placeholder="Notas (opcional)" className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900" />
+
+      <label className="flex items-start gap-2 rounded border border-amber-200 bg-amber-50 p-2 text-xs text-slate-700">
+        <input
+          type="checkbox"
+          checked={esPrincipal}
+          onChange={e => setEsPrincipal(e.target.checked)}
+          className="mt-0.5 h-3.5 w-3.5 accent-amber-600"
+        />
+        <span>
+          <span className="font-medium text-amber-800">Marcar como cliente principal</span> del expediente.
+          {modo === 'manual' && ' Se creará automáticamente en tu directorio de clientes.'}
+        </span>
+      </label>
+
       {error && <p className="text-xs text-red-600">{error}</p>}
       <button
         type="submit"

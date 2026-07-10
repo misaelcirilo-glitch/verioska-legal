@@ -69,6 +69,17 @@ export default async function JurisprudenciaDetallePage({
           </div>
         )}
 
+        {j.etapasAplicables.length > 0 && (
+          <div className="mt-4">
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-gray-400">Etapas aplicables</p>
+            <div className="flex flex-wrap gap-1.5">
+              {j.etapasAplicables.map(e => (
+                <span key={e} className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600">{e.replace(/_/g, ' ')}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
         <p className="mt-6 border-t border-gray-100 pt-4 text-xs text-gray-400">
           Síntesis curada por Verioska Legal con fines orientativos. Verifica el texto oficial en la fuente correspondiente ({j.organo}).
         </p>

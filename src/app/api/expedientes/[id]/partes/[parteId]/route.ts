@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { query, queryOne } from '@/lib/db'
 import { getSession } from '@/lib/auth'
+import { marcarPartePrincipal, desmarcarPartePrincipal } from '@/lib/partes-sync'
 
 // Permisos (PRP-005): editar/eliminar partes → admin/abogado.
 const EDIT_ROLES = ['admin', 'abogado']
@@ -95,35 +96,18 @@ export async function PATCH(
     }
 
     // 2. Sync inversa: marcar/desmarcar como cliente principal del expediente
-    let clienteVinculado: string | null = parte.cliente_id
     if ('esPrincipal' in body) {
       if (body.esPrincipal === true) {
-        // Si la parte no tiene cliente (fue registrada manual), lo creamos en el CRM.
-        if (!parte.cliente_id && exp.despacho_id) {
-          const nombre = (body.nombre as string) ?? parte.nombre
-          const apellidos = (body.apellidos as string | null | undefined) ?? parte.apellidos
-          const nuevoCliente = await queryOne<{ id: string }>(
-            `INSERT INTO clientes (despacho_id, nombre, apellidos, estado, fuente)
-             VALUES ($1, $2, $3, 'activo', 'directorio') RETURNING id`,
-            [exp.despacho_id, nombre, apellidos || null]
-          )
-          clienteVinculado = nuevoCliente?.id ?? null
-          if (clienteVinculado) {
-            await query('UPDATE partes SET cliente_id = $1 WHERE id = $2', [clienteVinculado, parteId])
-          }
-        }
-        // Un único principal por expediente
-        await query('UPDATE partes SET es_principal = false WHERE expediente_id = $1 AND id <> $2', [id, parteId])
-        await query('UPDATE partes SET es_principal = true, updated_at = NOW() WHERE id = $1', [parteId])
-        if (clienteVinculado) {
-          await query('UPDATE expedientes SET cliente_id = $1, updated_at = NOW() WHERE id = $2', [clienteVinculado, id])
-        }
+        await marcarPartePrincipal({
+          expedienteId: id,
+          parteId,
+          despachoId: exp.despacho_id,
+          clienteIdActual: parte.cliente_id,
+          nombre: (body.nombre as string) ?? parte.nombre,
+          apellidos: (body.apellidos as string | null | undefined) ?? parte.apellidos,
+        })
       } else {
-        // Desmarcar: quitar el flag y, si el expediente apuntaba a este cliente, desvincular.
-        await query('UPDATE partes SET es_principal = false, updated_at = NOW() WHERE id = $1', [parteId])
-        if (parte.cliente_id) {
-          await query('UPDATE expedientes SET cliente_id = NULL, updated_at = NOW() WHERE id = $1 AND cliente_id = $2', [id, parte.cliente_id])
-        }
+        await desmarcarPartePrincipal({ expedienteId: id, parteId, clienteId: parte.cliente_id })
       }
     }
 

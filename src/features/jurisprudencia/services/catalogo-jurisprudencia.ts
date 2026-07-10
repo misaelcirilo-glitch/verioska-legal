@@ -703,6 +703,11 @@ function normalizarTexto(texto: string): string {
     .trim()
 }
 
+// Peso base por relevancia editorial, usado como desempate del ranking.
+function pesoRelevancia(j: Jurisprudencia): number {
+  return j.relevancia === 'alta' ? 1 : 0
+}
+
 export function buscarJurisprudencia(params: {
   consulta?: string
   pais?: 'MX' | 'PE'
@@ -712,34 +717,14 @@ export function buscarJurisprudencia(params: {
 }): Jurisprudencia[] {
   let resultados = [...TODO_CATALOGO]
 
-  // Filtrar por país
+  // --- FILTROS DUROS (acotan el universo) ---
+  // País y etapa/delito sí excluyen, porque cambian el marco jurídico aplicable.
   if (params.pais) {
     resultados = resultados.filter(j => j.pais === params.pais)
   }
-
-  // Filtrar por etapa
   if (params.etapa) {
     resultados = resultados.filter(j => j.etapasAplicables.includes(params.etapa!))
   }
-
-  // Filtrar por tema (OR, no AND): devuelve las tesis etiquetadas con ese tema
-  // O que lo mencionan en rubro/texto. Antes era solo coincidencia exacta de
-  // tag, lo que —combinado con el filtro de texto que forzaba el chip— dejaba
-  // casi siempre 1 resultado (PRP-005 Fase 6).
-  if (params.tema) {
-    const temaNorm = normalizarTexto(params.tema)
-    const palabras = temaNorm.split(' ').filter(p => p.length > 2)
-    resultados = resultados.filter(j => {
-      const porTag = j.temas.some(t => normalizarTexto(t).includes(temaNorm))
-      if (porTag) return true
-      if (palabras.length === 0) return false
-      const textoCompleto = normalizarTexto(`${j.rubro} ${j.texto} ${j.temas.join(' ')}`)
-      const hits = palabras.filter(p => textoCompleto.includes(p)).length
-      return hits / palabras.length >= 0.5
-    })
-  }
-
-  // Filtrar por delito
   if (params.delito) {
     const delitoNorm = normalizarTexto(params.delito)
     resultados = resultados.filter(j =>
@@ -748,19 +733,37 @@ export function buscarJurisprudencia(params: {
     )
   }
 
-  // Búsqueda por texto libre
-  if (params.consulta) {
-    const palabras = normalizarTexto(params.consulta).split(' ').filter(p => p.length > 2)
-    if (palabras.length > 0) {
-      resultados = resultados
-        .map(j => {
-          const textoCompleto = normalizarTexto(`${j.rubro} ${j.texto} ${j.temas.join(' ')}`)
-          const coincidencias = palabras.filter(p => textoCompleto.includes(p)).length
-          return { ...j, _score: coincidencias / palabras.length }
-        })
-        .filter(j => (j as { _score: number })._score >= 0.2)
-        .sort((a, b) => (b as { _score: number })._score - (a as { _score: number })._score)
+  // --- SEÑALES DE RELEVANCIA (tema + consulta): REORDENAN, no excluyen ---
+  // Antes el tema y el texto filtraban de forma estricta y dejaban casi siempre
+  // 1 resultado por búsqueda. Ahora el abogado ve el catálogo completo del país
+  // (10-20+ tesis) con las más pertinentes al inicio: es una herramienta de
+  // consulta jurídica donde conviene poder explorar, no un match binario.
+  const terminos = [params.tema, params.consulta].filter(Boolean).join(' ').trim()
+
+  if (terminos) {
+    const palabras = normalizarTexto(terminos).split(' ').filter(p => p.length > 2)
+    const temaNorm = params.tema ? normalizarTexto(params.tema) : ''
+
+    const scoreDe = (j: Jurisprudencia): number => {
+      const heno = normalizarTexto(
+        `${j.rubro} ${j.texto} ${j.temas.join(' ')} ${j.delitosRelacionados.join(' ')}`
+      )
+      // Coincidencia exacta de tag temático pesa fuerte (chip seleccionado).
+      const bonusTag = temaNorm && j.temas.some(t => normalizarTexto(t).includes(temaNorm)) ? 1.5 : 0
+      const hits = palabras.length > 0 ? palabras.filter(p => heno.includes(p)).length : 0
+      const cobertura = palabras.length > 0 ? hits / palabras.length : 0
+      return cobertura + bonusTag
     }
+
+    resultados = resultados
+      .map(j => ({ j, s: scoreDe(j) }))
+      .sort((a, b) => b.s - a.s || pesoRelevancia(b.j) - pesoRelevancia(a.j))
+      .map(x => x.j)
+  } else {
+    // Sin términos: relevancia alta primero, luego lo más reciente.
+    resultados = [...resultados].sort(
+      (a, b) => pesoRelevancia(b) - pesoRelevancia(a) || b.fechaPublicacion.localeCompare(a.fechaPublicacion)
+    )
   }
 
   return resultados
