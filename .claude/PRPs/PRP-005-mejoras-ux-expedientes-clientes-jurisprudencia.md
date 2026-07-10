@@ -161,6 +161,26 @@ CREATE INDEX IF NOT EXISTS idx_partes_cliente ON partes(cliente_id);
 
 ## 🧠 Aprendizajes (Self-Annealing)
 
+### 2026-07-10: Ronda de cierre — gaps residuales tras re-auditar el código real
+Tras re-auditar cada punto contra el código (no contra este doc), la mayoría ya
+estaba implementado (1a, 1c, 2, 3 y casi todo 1b/1e). Gaps reales corregidos:
+- **1d — Tenancy en gastos/pagos**: `verifyOwnership` en `gastos/route.ts` y
+  `pagos/route.ts` filtraba SOLO por `user_id` → un colega del despacho veía el
+  expediente pero recibía 404 al registrar. Alineado a `(user_id OR despacho_id)`,
+  igual que expedientes/[id] y dosificación. (Mismo patrón de auto-blindaje ya
+  documentado; faltaba aplicarlo en finanzas.)
+- **1b — Cliente principal AL REGISTRAR**: el checkbox solo existía en edición
+  (estrella). Añadido al formulario de alta (`agregar-parte-form.tsx`) + `esPrincipal`
+  en el POST. Lógica de sync extraída a `src/lib/partes-sync.ts`
+  (`marcarPartePrincipal`/`desmarcarPartePrincipal`), reutilizada por POST y PATCH.
+- **1e — Modo IA de escritos** (antes diferido): implementado con OpenRouter +
+  fallback sin key (modelo base interno), campos editables e instrucciones,
+  snapshot en `escritos.campos`. GET expone `camposEditables`/`variablesExpediente`.
+- **Drift `plantillas_despacho.materia`**: usada en API/UI pero nunca creada en
+  mig. 004 → rompía el INSERT de plantillas en BD limpia. Formalizada en `mig. 008`.
+**Producción (Neon)**: aplicar `migrations/008` al desplegar.
+
+
 ### 2026-07-02: Fase 1 — El layer de despachos estaba muerto (raíz de finanzas)
 - **Error**: Gastos y Pagos daban 500/400. Causa raíz real: **no existe ningún despacho**, el signup (`api/auth/signup`) NO crea uno ni asigna `users.despacho_id`, y el token no lleva `despachoId`. Por eso `expedientes.despacho_id` siempre era NULL y `gastos/pagos.despacho_id` (NOT NULL) reventaban el INSERT.
 - **Fix**: El control de acceso de finanzas se hace por *ownership del expediente* (`verifyOwnership` por `user_id`), no por `despacho_id` → ahí es solo metadato. Se volvió `despacho_id` **nullable** en `gastos`/`pagos` (mig. 005) + derivación defensiva (`resolveDespachoId`). También `pagos.cliente_id` pasó a nullable (bloqueaba pagos sin cliente).

@@ -359,6 +359,16 @@ test('should calculate total with tax', () => {
 - **Fix**: Usar el MISMO predicado en listado y detalle: `WHERE id = $1 AND (user_id = $2 OR despacho_id = (SELECT despacho_id FROM users WHERE id = $2))`. La migración 005 pobló `despacho_id` justo para esto.
 - **Aplicar en**: Toda entidad multi-tenant — el scoping del **detalle** debe coincidir con el del **listado**. Clientes ya lo hacía bien (todo por `despacho_id`).
 
+### 2026-07-10: Tenancy faltaba en sub-recursos del expediente (gastos/pagos)
+- **Error**: `verifyOwnership` en `api/expedientes/[id]/gastos` y `.../pagos` filtraba solo por `user_id`. Un colega del mismo despacho veía el expediente pero recibía **404** al registrar un gasto/pago (reportado como "no se puede registrar").
+- **Fix**: Mismo predicado `(user_id OR despacho_id)` que listado/detalle. Partes, escritos y dosificación ya lo hacían bien.
+- **Aplicar en**: TODO sub-recurso bajo `[id]/` de una entidad multi-tenant. Al crear un endpoint nuevo, copiar el `verifyOwnership` con el predicado de despacho, no el de `user_id` solo.
+
+### 2026-07-10: Schema drift silencioso rompe INSERT en BD limpia
+- **Error**: `plantillas_despacho.materia` se usaba en API (`INSERT ... materia`) y UI, pero nunca se creó en migración. En Neon "funcionaba" por drift; en BD local limpia el INSERT reventaba con "column does not exist".
+- **Fix**: `migrations/008` con `ADD COLUMN IF NOT EXISTS`. Confirmar que una columna exista en una migración versionada antes de usarla; no confiar en el drift de Neon.
+- **Aplicar en**: Todo el proyecto. Columna usada en código ⇒ debe tener migración `IF NOT EXISTS`.
+
 ---
 
 *Este archivo es el cerebro de la fábrica. Cada error documentado la hace más fuerte.*
