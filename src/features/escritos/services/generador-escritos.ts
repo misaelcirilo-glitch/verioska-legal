@@ -83,6 +83,58 @@ export function sustituirPlantilla(contenido: string, variables: Record<string, 
   })
 }
 
+// ============================================
+// Modo IA (OpenRouter) — el motor interno produce el MODELO base; la IA lo
+// reescribe/enriquece con las variables editables y las instrucciones del
+// abogado. Sin API key el llamador usa el modelo base como fallback.
+// ============================================
+
+// Variables ofrecidas como CAMPOS EDITABLES en la UI (clave → etiqueta).
+export const CAMPOS_EDITABLES: { key: string; label: string }[] = [
+  { key: 'imputado', label: 'Imputado / Cliente' },
+  { key: 'victima', label: 'Víctima' },
+  { key: 'defensor', label: 'Defensor' },
+  { key: 'juzgado', label: 'Juzgado' },
+  { key: 'distrito_judicial', label: 'Distrito judicial' },
+  { key: 'fiscalia', label: 'Fiscalía' },
+  { key: 'nuc', label: 'NUC / Carpeta' },
+  { key: 'causa_penal', label: 'Causa penal' },
+  { key: 'delito', label: 'Delito' },
+  { key: 'etapa_procesal', label: 'Etapa procesal' },
+]
+
+export function construirPromptEscritoIA(params: {
+  titulo: string
+  variables: Record<string, string>
+  modeloBase: string
+  instrucciones?: string
+}): { system: string; prompt: string } {
+  const { titulo, variables, modeloBase, instrucciones } = params
+  const datosLista = Object.entries(variables)
+    .map(([k, v]) => `- ${k}: ${v}`)
+    .join('\n')
+
+  const system = [
+    'Eres un abogado penalista litigante mexicano experto en el sistema penal acusatorio (CNPP).',
+    'Redactas escritos y promociones jurídicas formales, listos para presentar ante el juzgado.',
+    'Usa lenguaje jurídico correcto, cita los fundamentos legales aplicables (CPEUM, CNPP) y respeta la estructura procesal.',
+    'No inventes datos que no te den: si falta un dato, déjalo marcado entre corchetes [ASÍ].',
+    'Devuelve ÚNICAMENTE el texto del escrito, sin comentarios ni explicaciones adicionales.',
+  ].join(' ')
+
+  const prompt = `Genera un escrito del tipo: "${titulo}".
+
+DATOS DEL EXPEDIENTE (úsalos para completar el escrito):
+${datosLista}
+
+MODELO DE REFERENCIA (estructura y fundamentos a seguir; mejóralo y complétalo):
+${modeloBase}
+${instrucciones ? `\nINSTRUCCIONES ADICIONALES DEL ABOGADO:\n${instrucciones}\n` : ''}
+Redacta el escrito final completo.`
+
+  return { system, prompt }
+}
+
 export function generarEscrito(tipo: string, datos: DatosExpediente): EscritoGenerado {
   const titulo = TIPOS_ESCRITO[tipo as keyof typeof TIPOS_ESCRITO] || tipo
   const imputado = formatNombre(datos.imputado)

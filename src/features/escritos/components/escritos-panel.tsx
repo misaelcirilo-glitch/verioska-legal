@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { FileText, Loader2, Plus, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react'
+import { FileText, Loader2, Plus, ChevronDown, ChevronUp, Copy, Check, Sparkles } from 'lucide-react'
 import { Badge } from '@/shared/components/badge'
 
 interface Escrito {
@@ -25,6 +25,13 @@ interface Plantilla {
   categoria: string
 }
 
+interface CampoEditable {
+  key: string
+  label: string
+}
+
+type Modo = 'predefinida' | 'plantilla_propia' | 'ia'
+
 interface Props {
   expedienteId: string
 }
@@ -33,7 +40,7 @@ export function EscritosPanel({ expedienteId }: Props) {
   const [escritos, setEscritos] = useState<Escrito[]>([])
   const [tipos, setTipos] = useState<TipoEscrito[]>([])
   const [plantillas, setPlantillas] = useState<Plantilla[]>([])
-  const [modo, setModo] = useState<'predefinida' | 'plantilla_propia'>('predefinida')
+  const [modo, setModo] = useState<Modo>('predefinida')
   const [loading, setLoading] = useState(true)
   const [generando, setGenerando] = useState(false)
   const [error, setError] = useState('')
@@ -41,6 +48,11 @@ export function EscritosPanel({ expedienteId }: Props) {
   const [selectedPlantilla, setSelectedPlantilla] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  // Modo IA: campos editables + instrucciones
+  const [camposEditables, setCamposEditables] = useState<CampoEditable[]>([])
+  const [campos, setCampos] = useState<Record<string, string>>({})
+  const [instrucciones, setInstrucciones] = useState('')
+  const [iaDisponible, setIaDisponible] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -48,12 +60,20 @@ export function EscritosPanel({ expedienteId }: Props) {
       try {
         const res = await fetch(`/api/expedientes/${expedienteId}/escritos`)
         if (!res.ok) throw new Error('Error al cargar')
-        const { data, tiposDisponibles, plantillas: plt } = await res.json()
+        const { data, tiposDisponibles, plantillas: plt, camposEditables: ce, variablesExpediente, iaDisponible: iaOk } = await res.json()
         setEscritos(data)
         setTipos(tiposDisponibles)
         setPlantillas(plt || [])
+        setCamposEditables(ce || [])
+        setIaDisponible(!!iaOk)
         if (tiposDisponibles.length > 0) setSelectedTipo(tiposDisponibles[0].value)
         if (plt && plt.length > 0) setSelectedPlantilla(plt[0].id)
+        // Pre-cargar los campos editables con las variables del expediente.
+        if (ce && variablesExpediente) {
+          const init: Record<string, string> = {}
+          for (const c of ce as CampoEditable[]) init[c.key] = variablesExpediente[c.key] ?? ''
+          setCampos(init)
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error')
       } finally {
@@ -64,10 +84,17 @@ export function EscritosPanel({ expedienteId }: Props) {
   }, [expedienteId])
 
   async function handleGenerar() {
-    const body = modo === 'plantilla_propia'
-      ? { origen: 'plantilla_propia', plantillaId: selectedPlantilla }
-      : { origen: 'predefinida', tipoEscrito: selectedTipo }
-    if (modo === 'plantilla_propia' ? !selectedPlantilla : !selectedTipo) return
+    let body: Record<string, unknown>
+    if (modo === 'plantilla_propia') {
+      if (!selectedPlantilla) return
+      body = { origen: 'plantilla_propia', plantillaId: selectedPlantilla }
+    } else if (modo === 'ia') {
+      if (!selectedTipo) return
+      body = { origen: 'ia', tipoEscrito: selectedTipo, campos, instrucciones: instrucciones || undefined }
+    } else {
+      if (!selectedTipo) return
+      body = { origen: 'predefinida', tipoEscrito: selectedTipo }
+    }
     setGenerando(true)
     setError('')
     try {
@@ -126,24 +153,18 @@ export function EscritosPanel({ expedienteId }: Props) {
         >
           Plantilla del despacho
         </button>
+        <button
+          type="button"
+          onClick={() => setModo('ia')}
+          className={`flex-1 inline-flex items-center justify-center gap-1 rounded px-2 py-1 text-xs font-medium ${modo === 'ia' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-600'}`}
+        >
+          <Sparkles className="h-3 w-3" /> Generar con IA
+        </button>
       </div>
 
       <div className="mb-4 flex items-end gap-3">
         <div className="flex-1">
-          {modo === 'predefinida' ? (
-            <>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Tipo de escrito</label>
-              <select
-                value={selectedTipo}
-                onChange={e => setSelectedTipo(e.target.value)}
-                className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
-              >
-                {tipos.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
-            </>
-          ) : (
+          {modo === 'plantilla_propia' ? (
             <>
               <label className="mb-1 block text-xs font-medium text-slate-600">Plantilla del despacho</label>
               {plantillas.length === 0 ? (
@@ -162,17 +183,70 @@ export function EscritosPanel({ expedienteId }: Props) {
                 </select>
               )}
             </>
+          ) : (
+            <>
+              <label className="mb-1 block text-xs font-medium text-slate-600">
+                {modo === 'ia' ? 'Modelo base' : 'Tipo de escrito'}
+              </label>
+              <select
+                value={selectedTipo}
+                onChange={e => setSelectedTipo(e.target.value)}
+                className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+              >
+                {tipos.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </>
           )}
         </div>
         <button
           onClick={handleGenerar}
-          disabled={generando || (modo === 'predefinida' ? !selectedTipo : !selectedPlantilla)}
+          disabled={generando || (modo === 'plantilla_propia' ? !selectedPlantilla : !selectedTipo)}
           className="inline-flex items-center gap-1.5 rounded-md bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
         >
-          <Plus className="h-4 w-4" />
-          {generando ? 'Generando...' : 'Generar'}
+          {modo === 'ia' ? <Sparkles className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+          {generando ? 'Generando...' : modo === 'ia' ? 'Generar con IA' : 'Generar'}
         </button>
       </div>
+
+      {/* Modo IA: campos editables + instrucciones */}
+      {modo === 'ia' && (
+        <div className="mb-4 space-y-3 rounded-lg border border-indigo-100 bg-indigo-50/40 p-3">
+          {!iaDisponible && (
+            <p className="rounded border border-amber-200 bg-amber-50 px-2 py-1.5 text-xs text-amber-800">
+              La IA no está configurada (falta OPENROUTER_API_KEY). Se generará el modelo base con tus campos;
+              conéctala para obtener una redacción enriquecida.
+            </p>
+          )}
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-slate-600">Campos editables</label>
+            <div className="grid grid-cols-2 gap-2">
+              {camposEditables.map(c => (
+                <div key={c.key}>
+                  <label className="mb-0.5 block text-[11px] text-slate-500">{c.label}</label>
+                  <input
+                    type="text"
+                    value={campos[c.key] ?? ''}
+                    onChange={e => setCampos(prev => ({ ...prev, [c.key]: e.target.value }))}
+                    className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-600">Instrucciones para la IA (opcional)</label>
+            <textarea
+              value={instrucciones}
+              onChange={e => setInstrucciones(e.target.value)}
+              rows={2}
+              placeholder="Ej.: enfatiza la violación al plazo de 48h y solicita medida cautelar menos lesiva."
+              className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900"
+            />
+          </div>
+        </div>
+      )}
 
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
