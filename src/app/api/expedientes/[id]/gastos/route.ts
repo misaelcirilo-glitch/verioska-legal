@@ -4,8 +4,14 @@ import { query, queryOne, resolveDespachoId } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 
 async function verifyOwnership(expedienteId: string, userId: string) {
+  // Tenancy alineada al listado/detalle: el dueño O cualquier colega del mismo
+  // despacho. Antes filtraba solo por user_id → un colega veía el expediente en
+  // la lista pero recibía 404 al registrar gastos (mismo patrón de auto-blindaje
+  // ya corregido en expedientes/[id] y dosificación).
   return queryOne<{ id: string; despacho_id: string | null }>(
-    'SELECT id, despacho_id FROM expedientes WHERE id = $1 AND user_id = $2',
+    `SELECT id, despacho_id FROM expedientes
+      WHERE id = $1
+        AND (user_id = $2 OR despacho_id = (SELECT despacho_id FROM users WHERE id = $2))`,
     [expedienteId, userId]
   )
 }
